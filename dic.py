@@ -2,63 +2,65 @@ import pandas as pd
 import numpy as np
 
 class Trie:
-    def __new_node():
+    def __new_node(self):
         return {
-            "son": {},
-            "is_end": False,
-            attr: []
+            'son': {},
+            'is_end': False,
+            'attr': []
         }
 
-    def __init__():
-        root=__new_node()
+    def __init__(self):
+        self.root=self.__new_node()
 
-    def reset():
-        last=root
+    def reset(self):
+        self.last=self.root
     
-    def step(letter):
-        if last.son[letter] is None: return False
-        last=last.son[letter]
+    def step(self, letter):
+        if self.last['son'].get(letter) is None: return False
+        self.last=self.last['son'][letter]
         return True
 
-    def reach_end():
-        return last.is_end
+    def reach_end(self):
+        return self.last['is_end']
     
-    def get_attr():
-        assert last.is_end
-        return last.attr
+    def get_attr(self):
+        assert self.last['is_end']
+        return self.last['attr']
 
-    def insert(word, attr):
-        reset()
+    def insert(self, word, attr):
+        # print(word, attr)
+        self.reset()
         for letter in word:
-            if not step(letter):
-                last.son[letter]=__new_node()
-                step(letter)
-        assert last.is_end==False
-        last.is_end=True
-        last.attr=attr
+            if not self.step(letter):
+                self.last['son'][letter]=self.__new_node()
+                self.step(letter)
+        if self.last['is_end']==True:
+            raise RuntimeError(word,'value existed,',attr,self.last['attr'])
+        self.last['is_end']=True
+        self.last['attr']=attr
     
-    def search(word):
-        reset()
+    def search(self, word):
+        self.reset()
         for letter in word:
-            if not step(letter):
+            if not self.step(letter):
                 return None
-        return last.attr if last.is_end else None
+        return self.last['attr'] if self.last['is_end'] else None
 
-    def __build(datas):
+class WordDict(Trie):
+    def __init__(self, path):
+        super().__init__()
+        words=pd.read_csv(path, header=None, encoding='utf-8').drop_duplicates([0]).fillna('undefined')
+        self.total_freq=sum(map(int,words.iloc[:,1]))
+        self.build(words.to_numpy())
+
+    def build(self, datas):
         for data in datas:
             attr={
                 'freq': data[1],
                 'parts-of-speech': data[2],
                 'prop': data[3:],
             }
-            trie.insert(data[0], attr)
-
-class WordDict(Trie):
-    def __init__(self, path):
-        super().__init__()
-        words=pd.read_csv(path, header=None)
-        self.total_freq=words.iloc[:,1].sum()
-        super().__build(words.to_numpy())
+            self.insert(data[0], attr)
 
 class LetterDict:
     def __init__(self, path):

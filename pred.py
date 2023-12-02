@@ -1,14 +1,22 @@
 import numpy as np
 from ds import Dataset
 from numpy.random import standard_normal
+import numpy as np
+from utils import encode_sentence, decode_sentence, err
+from math import log, exp
 
 class HMMPredictor:
     def __init__(self, ds, hyper_param):
         self.ds=ds
         self.hyper_param=hyper_param
-        self.A=standard_normal((self.hyper_param.N, self.hyper_param.N))
-        self.B=standard_normal((self.hyper_param.N, self.hyper_param.M))
-        self.pi=standard_normal(self.hyper_param.N)
+        if self.ds.without_mark:
+            self.A=standard_normal((self.hyper_param.N, self.hyper_param.N))
+            self.B=standard_normal((self.hyper_param.N, self.hyper_param.M))
+            self.pi=standard_normal(self.hyper_param.N)
+        else:
+            self.A=np.zeros((self.hyper_param.N, self.hyper_param.N))
+            self.B=np.zeros((self.hyper_param.N, self.hyper_param.M))
+            self.pi=np.zeros(self.hyper_param.N)
 
     def get_alpha(self, O):
         alpha=[]
@@ -43,9 +51,13 @@ class HMMPredictor:
         beta=self.get_beta(O)
         gamma=self.get_gamma(alpha, beta, O)
         xi=get_xi(alpha, beta, O)
-        self.A=[[sum([xi[t][i][j] for t in range(self.hyper_param.T)])/sum([gamma[t][i] for t in range(self.hyper_param.T)]) for j in range(self.hyper_param.N)] for i in range(self.hyper_param.N)]
-        self.B=[[sum([(gamma[t][j] if O[t]==k else 0) for t in range(self.hyper_param.T)])/sum([gamma[t][j] for t in range(self.hyper_param.T)]) for k in range(self.hyper_param.M)] for j in range(self.hyper_param.N)]
+        self.A, self.B=[], []
+        for i in range(self.hyper_param.N):
+            self.A.append([sum([xi[t][i][j] for t in range(self.hyper_param.T)])/sum([gamma[t][i] for t in range(self.hyper_param.T)]) for j in range(self.hyper_param.N)])
+        for j in range(self.hyper_param.N):
+            self.B.append([sum([(gamma[t][j] if O[t]==k else 0) for t in range(self.hyper_param.T)])/sum([gamma[t][j] for t in range(self.hyper_param.T)]) for k in range(self.hyper_param.M)])
         self.pi=gamma[1]
+        print(self.A, self.B, self.pi, sep='\n')
 
     def train(self):
         datas=self.ds.get_data()
@@ -54,32 +66,31 @@ class HMMPredictor:
                 self.step(np.array(sentence))
         else:
             for sentence in datas:
-                self.step(np.array(sentence))
+                # print(sentence)
                 self.pi[sentence[0][1]]+=1
                 for i in range(len(sentence)-1):
                     self.A[sentence[i][1]][sentence[i+1][1]]+=1
                 for i in range(len(sentence)):
                     self.B[sentence[i][1]][sentence[i][0]]+=1
-            self.A=[self.A[i]/sum(self.A[i]) for i in range(self.hyper_param.N)]
-            self.B=[self.B[i]/sum(self.B[i]) for i in range(self.hyper_param.N)]
+            self.A=np.array([self.A[i]/sum(self.A[i]) for i in range(self.hyper_param.N)])
+            self.B=np.array([self.B[i]/sum(self.B[i]) for i in range(self.hyper_param.N)])
             self.pi=self.pi/sum(self.pi)
-        
     
-    def predict(self, O):
-        p=np.ones([len(O), self.hyper_param.N])
-        p=[[self.pi[i]*self.B[i][O[0]] for i in range(self.hyper_param.N)]]
-        backpointers=[[]]
+    def predict(self, sentence):
+        O=encode_sentence(sentence, self.ds.letter_dict, without_mark=True)
+        # print(self.A, self.B, self.pi, sep='\n')
+        logp=[[-log(self.pi[i]+err)-log(self.B[i][O[0]]+err) for i in range(self.hyper_param.N)]]
+        frm=[[]]
         for t in range(1, len(O)):
             b=self.B[:,O[t]]
-            v=np.expand_dims(p[t-1], axis=1)*self.A
-            p.append(np.max(v,0)*b)
-            backpointers.append(np.argmax(v,0))
+            nowlogp=(np.expand_dims(logp[t-1], axis=0)-np.log(self.A.T+err)-np.expand_dims(np.log(b+err),axis=1))
+            logp.append(nowlogp.min(axis=1))
+            frm.append(nowlogp.argmin(axis=1))
         
-        viterbi=[np.argmax(p[-1])]
-        for bp in reversed(backpointers[1:]):
-            viterbi.append(bp[viterbi[-1]])
-        viterbi.reverse()
-
-        viterbi=[self.map_i[v] for v in viterbi]
-        viterbi_score=np.max(p[-1])
-        return viterbi, viterbi_score
+        endpos=logp[-1].argmin()
+        I=[endpos]
+        for t in range(len(O)-1,0,-1):
+            endpos=frm[t][endpos]
+            I.append(endpos)
+        I=I[::-1]
+        return decode_sentence(I, sentence)
