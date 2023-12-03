@@ -1,22 +1,18 @@
-from glob import glob
 import pandas as pd
 import numpy as np
-from utils import encode_sentence
+from param import Base
 
-class Dataset:
-    def __init__(self, ds_url, letter_dict, word_dict, without_mark=True):
+class Dataset(Base):
+    def __init__(self, _paths, encoder_decoder, not_divided=True):
         # print(glob(ds_url))
-        self.without_mark=without_mark
+        self.save_hyperparameters()
         self.data=[]
-        self.letter_dict=letter_dict
-        self.word_dict=word_dict
-        paths=glob(ds_url)
-        for path in paths:
+        for path in _paths:
             with open(path, 'r', encoding='utf-8') as f:
-                lines=f.readlines()
-                for line in lines:
+                for i in range(1000):
+                    line=f.readline()
                     if line.strip()=='': continue
-                    encoded_sentence=encode_sentence(line, letter_dict, without_mark=self.without_mark)
+                    encoded_sentence=self.encoder_decoder.encode_sentence(line, not_divided=self.not_divided)
                     assert not np.array_equal(encoded_sentence, np.array([]))
                     self.data.append(encoded_sentence)
         self.maxlen=max(len(x) for x in self.data)
