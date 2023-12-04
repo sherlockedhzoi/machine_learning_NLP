@@ -5,6 +5,7 @@ from param import HyperParam
 from seg import Segmentor
 from code import Coder
 from glob import glob
+from extractor import TextRank
 import argparse
 
 parser=argparse.ArgumentParser()
@@ -30,9 +31,12 @@ pred=HMMPredictor(ds, hyper_param.N, hyper_param.M, hyper_param.T)
 pred.train()
 print('Predictor Training Complete.')
 seg=Segmentor(pred, word_dict)
+extr=TextRank(lim=2)
 
 with open('test.txt','r', encoding='utf-8') as f:
     lines=f.readlines()
     for line in lines:
         words=seg.forward(line)
         print(words)
+        # extr.load(words)
+        # print(words, extr.get_rank()[:3], sep='\n')
