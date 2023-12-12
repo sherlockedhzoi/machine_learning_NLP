@@ -111,7 +111,7 @@ class HHMPredictor(Base):
         print('B calculation done.')
         pi=sum([gamma[epoch][t] for epoch in range(len(self.ds)) for t in range(len(datas[epoch])) if self.code.is_begin(datas[epoch][t])])
         A, B, pi=np.array(A), np.array(B), np.array(pi)
-        loss=(self.A-A).abs().sum()+(self.B-B).abs().sum()+(self.pi-pi).abs().sum()
+        loss=abs(self.A-A).sum()+abs(self.B-B).sum()+abs(self.pi-pi).sum()
         self.A, self.B, self.pi=A, B, pi
         return loss
 
@@ -161,7 +161,7 @@ class HHMPredictor(Base):
 
     def save(self):
         assert self.ds, 'need to train before saving'
-        if self.not_divided:
+        if self.ds.not_divided:
             with open('data/state_dict.json','w') as f:
                 json.dump({'A': self.A.tolist(), 'B': self.B.tolist(), 'pi': self.pi.tolist()}, f, indent='\t')
         else:
