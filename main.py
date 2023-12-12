@@ -5,7 +5,7 @@ from param import HyperParam
 from seg import Segmentor
 from code import Coder
 from glob import glob
-from extractor import TextRank
+# from extractor import TextRank
 from utils import to_sentence
 import argparse
 

@@ -1,13 +1,13 @@
 from ds import Dataset
 from numpy.random import uniform
 import numpy as np
-from utils import padding
+from utils import err
 from math import log, exp
 from param import Base
 import json
 
 class HHMPredictor(Base):
-    def __init__(self, N, M, T, code, ds=None):
+    def __init__(self, N, M, T, code, ds=None, loop_lim=10):
         self.save_hyperparameters()
         self.letter_dict=self.code.letter_dict
         if self.ds:
@@ -77,72 +77,53 @@ class HHMPredictor(Base):
             xi.append(np.array([np.array([(alpha[t][i]*self.A[i][j]*self.B[j][O[t+1]]*beta[t+1][j]/s if s else 0)for j in range(self.N)]) for i in range(self.N)]))
         return np.array(xi)
 
-    def step(self, O):
-        print(f'A: {self.A}', f'B: {self.B}', f'pi: {self.pi}', sep='\n')
+    def step(self, datas):
+        # print(f'A: {self.A}', f'B: {self.B}', f'pi: {self.pi}', sep='\n')
         assert not(np.isnan(self.A).any() or np.isnan(self.B).any() or np.isnan(self.pi).any()), 'Nan in A, B, pi'
         assert len(self.A.nonzero()), 'A are all zeros'
         assert len(self.B.nonzero()), 'B are all zeros'
         assert len(self.pi.nonzero()), 'pi are all zeros'
-        alpha=self.get_alpha(O)
-        beta=self.get_beta(O)
-        print(f'alpha: {alpha}', f'beta: {beta}', sep='\n')
-        gamma=self.get_gamma(alpha, beta, O)
-        xi=self.get_xi(alpha, beta, O)
-        # print(gamma, xi, sep='\n')
-        self.A, self.B=[], []
+        gamma=[]
+        xi=[]
+        for sentence in datas:
+            alpha=self.get_alpha(sentence)
+            beta=self.get_beta(sentence)
+            gamma.append(self.get_gamma(alpha, beta, sentence))
+            xi.append(self.get_xi(alpha, beta, sentence))
+        # print(np.array(gamma).shape, np.array(xi).shape)
+        print('Pre-calculation complete.')
+        A, B=[], []
         for i in range(self.N):
             nowA=[]
             for j in range(self.N):
-                s1=sum([gamma[t][i] for t in range(len(O))])
-                s2=sum([xi[t][i][j] for t in range(len(O)-1)])
+                s1=sum([gamma[epoch][t][i] for epoch in range(len(self.ds)) for t in range(len(datas[epoch]))])
+                s2=sum([xi[epoch][t][i][j] for epoch in range(len(self.ds)) for t in range(len(datas[epoch])-1)])
                 nowA.append(s2/s1 if s1 else 0)
-            self.A.append(np.array(nowA))
+            A.append(np.array(nowA))
+        print('A calculation done.')
         for j in range(self.N):
             nowB=[]
             for k in range(self.M):
-                s1=sum([gamma[t][j] for t in range(len(O))])
-                s2=sum([gamma[t][j]*(O[t]==k) for t in range(len(O))])
+                s1=sum([gamma[epoch][t][j] for epoch in range(len(self.ds)) for t in range(len(datas[epoch]))])
+                s2=sum([gamma[epoch][t][j]*(datas[epoch][t]==k) for epoch in range(len(self.ds)) for t in range(len(datas[epoch]))])
                 nowB.append(s2/s1 if s1 else 0)
-            self.B.append(np.array(nowB))
-        self.pi=sum([gamma[t] for t in range(len(O)) if self.code.is_begin(O[t])])
-        self.A=np.array(self.A)
-        self.B=np.array(self.B)
-        self.pi=np.array(self.pi)
+            B.append(np.array(nowB))
+        print('B calculation done.')
+        pi=sum([gamma[epoch][t] for epoch in range(len(self.ds)) for t in range(len(datas[epoch])) if self.code.is_begin(datas[epoch][t])])
+        A, B, pi=np.array(A), np.array(B), np.array(pi)
+        loss=(self.A-A).abs().sum()+(self.B-B).abs().sum()+(self.pi-pi).abs().sum()
+        self.A, self.B, self.pi=A, B, pi
+        return loss
 
     def train(self):
         datas=self.ds.get_data()
         # print(self.A.shape, self.B.shape, self.pi.shape)
         if self.ds.not_divided:
-            gamma=[]
-            xi=[]
-            for sentence in datas:
-                alpha=self.get_alpha(sentence)
-                beta=self.get_beta(sentence)
-                gamma.append(self.get_gamma(alpha, beta, sentence))
-                xi.append(self.get_xi(alpha, beta, sentence))
-            # print(np.array(gamma).shape, np.array(xi).shape)
-            print('Pre-calculation complete.')
-            self.A, self.B=[], []
-            for i in range(self.N):
-                nowA=[]
-                for j in range(self.N):
-                    s1=sum([gamma[epoch][t][i] for epoch in range(len(self.ds)) for t in range(len(datas[epoch]))])
-                    s2=sum([xi[epoch][t][i][j] for epoch in range(len(self.ds)) for t in range(len(datas[epoch])-1)])
-                    nowA.append(s2/s1 if s1 else 0)
-                self.A.append(np.array(nowA))
-            print('A calculation done.')
-            for j in range(self.N):
-                nowB=[]
-                for k in range(self.M):
-                    s1=sum([gamma[epoch][t][j] for epoch in range(len(self.ds)) for t in range(len(datas[epoch]))])
-                    s2=sum([gamma[epoch][t][j]*(datas[epoch][t]==k) for epoch in range(len(self.ds)) for t in range(len(datas[epoch]))])
-                    nowB.append(s2/s1 if s1 else 0)
-                self.B.append(np.array(nowB))
-            print('B calculation done.')
-            self.pi=sum([gamma[epoch][t] for epoch in range(len(self.ds)) for t in range(len(datas[epoch])) if self.code.is_begin(datas[epoch][t])])
-            self.A=np.array(self.A)
-            self.B=np.array(self.B)
-            self.pi=np.array(self.pi)
+            for i in range(self.loop_lim):
+                loss=self.step(datas)
+                print(f'Update {i} time: loss {loss}')
+                if loss<err:
+                    break
         else:
             for sentence in datas:
                 for i in range(len(sentence)):

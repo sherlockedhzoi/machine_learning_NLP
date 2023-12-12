@@ -1,6 +1,4 @@
-def padding(words, max_length=1000):
-    return map(lambda x,y: y if x is None else x, words, [-1]*max_length)
-
+err=1e-10
 def to_sentence(words):
     line=''
     for word in words:
