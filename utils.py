@@ -1,4 +1,12 @@
-err=1e-100
+def padding(words, max_length=1000):
+    return map(lambda x,y: y if x is None else x, words, [-1]*max_length)
+
+def to_sentence(words):
+    line=''
+    for word in words:
+        line+=word['word']+'/'+word['tag']+(
+            '('+','.join(word['prop'])+')' if word['prop']!='undefined' else '')+' '
+    return line
 
 important_pairs={
     'a->n': 10,

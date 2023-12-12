@@ -64,6 +64,7 @@ class WordDict(Trie):
         words=pd.read_csv(path, header=None, encoding='utf-8', dtype=str).drop_duplicates([0]).fillna('undefined')
         self.total_freq=sum(map(int,words.iloc[:,1]))
         self.build(words.to_numpy())
+        print('total words:',len(words))
 
     def build(self, datas):
         for data in datas:

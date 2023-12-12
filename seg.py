@@ -23,8 +23,7 @@ class Segmentor(Base):
         log_total=log(self.word_dict.total_freq)
         max_to=[None]*len(to)
         for u in range(len(to)-1,-1,-1):
-            # print(u, to[u])
-            max_to[u]=min((-log(freq)+log_total+max_to[v+1][0],v) for v,freq in to[u]) if len(to[u]) else (0,len(to)-1)
+            max_to[u]=min((-log(freq)+log_total+max_to[v+1][0],v) for v,freq in to[u]) if len(to[u]) else (0,u)
         return max_to
 
     def forward(self, sentence):
@@ -34,61 +33,28 @@ class Segmentor(Base):
         max_to=self.calc_max(to)
         buf=''
         words=[]
+        p=0
         while l<N:
             r=max_to[l][1]+1
+            p+=max_to[l][0]
             now_word=sentence[l:r]
-            if r==l+1:
-                buf+=now_word
-            else:
+            if self.word_dict.find(now_word) is not None:
                 if buf:
-                    if self.word_dict.find(buf):
-                        words.append({
-                            'word': buf,
-                            'tag': self.word_dict.get_tag(buf),
-                            'prop': self.word_dict.get_prop(buf)
-                        })
-                    elif self.predict:
-                        predict_datas=self.predictor.predict(buf)
-                        if len(predict_datas)!=1:
-                            for predict_data in predict_datas:
-                                words.append(predict_data)
-                        else:
-                            for word in buf:
-                                words.append({
-                                    'word': word,
-                                    'tag': self.word_dict.get_tag(word),
-                                    'prop': self.word_dict.get_prop(word)
-                                })
-                    else:
-                        for word in buf:
-                            words.append({
-                                'word': word,
-                                'tag': self.word_dict.get_tag(word),
-                                'prop': self.word_dict.get_prop(word)
-                            })
+                    predict_result=self.predictor.predict(buf)
+                    words.append(word for word in predict_result)
                     buf=''
                 words.append({
                     'word': now_word,
                     'tag': self.word_dict.get_tag(now_word),
                     'prop': self.word_dict.get_prop(now_word)
                 })
+            else:
+                buf+=now_word
             l=r
         if buf:
-            if self.word_dict.find(buf):
-                words.append({
-                    'word': buf,
-                    'tag': self.word_dict.get_tag(buf),
-                    'prop': self.word_dict.get_prop(buf)
-                })
-            elif self.predict:
-                predict_datas=self.predictor.predict(buf)
-                for predict_data in predict_datas:
-                    words.append(predict_data)
-            else:
-                for word in buf:
-                    words.append({
-                        'word': word,
-                        'tag': self.word_dict.get_tag(word),
-                        'prop': self.word_dict.get_prop(word)
-                    })
+            predict_result=self.predictor.predict(buf)
+            print(predict_result)
+            words+=predict_result
+            buf=''
+        print(words)
         return words

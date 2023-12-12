@@ -7,6 +7,8 @@ class Coder(Base):
         self.save_hyperparameters()        
         if self.with_tag:
             self.tag_dict=pd.read_csv('./data/tag.csv')
+            self.tag_cnt=len(self.tag_dict['tag'].to_list())
+            print('tag_cnt:',self.tag_cnt)
 
     def encode_pos(self, pos) -> int:
         assert pos in ['M', 'B', 'E', 'S'], 'state must be M, B, E, or S'
@@ -24,16 +26,13 @@ class Coder(Base):
         encoded_sentence=[]
         if not_divided:
             sentence=''.join(line.strip().split('  '))
-            # print(line, sentence)
             for letter in sentence:
                 encoded_sentence.append(self.letter_dict.get_id(letter))
         else:
             words=line.split('  ')
-            for w in words:
+            for w in words[1:]:
                 if w.strip()=='': continue
                 word, tag=w.strip().split('[')[-1].split(']')[0].split('/')
-                # if not self.word_dict.find(word):
-                #     self.word_dict.insert(word, {'freq': 1, 'tag': tag, 'prop': 'undefined'})
                 if len(word)==1: 
                     encoded_sentence.append(self.encode_word(word, 'S', tag))
                 else:
@@ -41,8 +40,16 @@ class Coder(Base):
                     for letter in word[1:-1]:
                         encoded_sentence.append(self.encode_word(letter, 'M', tag))
                     encoded_sentence.append(self.encode_word(word[-1], 'E', tag))
-
         return encoded_sentence
+
+    def is_begin(self, tag):
+        return self.decode_state(tag)['pos'] in ['B', 'S']
+    def get_all_ends(self):
+        ends=[]
+        for pos in ['E','S']:
+            for tag in range(self.tag_cnt):
+                ends.append(tag*4+self.encode_pos(pos))
+        return sorted(ends)
 
     def decode_pos(self, state) -> str:
         assert state in range(4)
@@ -65,16 +72,8 @@ class Coder(Base):
             if state[i]['pos']=='B' or state[i]['pos']=='S':
                 assert state[i-1]['pos']=='E' or state[i-1]['pos']=='S'
                 word=sentence[pre:i]
-                words.append({
-                    'word': word,
-                    'tag': state[i-1]['tag'],
-                    'prop': 'undefined'
-                })
+                words.append({'word': word, 'tag': state[i-1]['tag'], 'prop': 'undefined'})
                 pre=i
         word=sentence[pre:]
-        words.append({
-            'word': word,
-            'tag': state[-1]['tag'],
-            'prop': 'undefined'
-        })
+        words.append({'word': word, 'tag': state[-1]['tag'], 'prop': 'undefined'})
         return words
