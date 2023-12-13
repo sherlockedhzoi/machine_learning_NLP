@@ -28,7 +28,6 @@ class Trie:
         return self.last['attr']
 
     def insert(self, word, attr):
-        # print(word, attr)
         self.reset()
         for letter in word:
             if not self.step(letter):
