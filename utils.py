@@ -16,10 +16,8 @@ class Base:
 
 err=1e-10
 def to_sentence(words):
-    # print(words)
     line=''
     for word in words:
-        # print(word['word'], word['tag'],word['prop'])
         line+=word['word']+('/'+word['tag'] if word['tag'] else '')+(
             '('+','.join(word['prop'])+')' if word['prop'] and word['prop']!='undefined' else '')+' '
     return line
@@ -57,7 +55,6 @@ def evaluate(pred, ds):
     loss=0
     batch=ds.get_batch(50)
     for line, correct_sentence in batch:
-        # print(line)
         words=pred.predict(line)
         sentence=to_sentence(words)
         nowloss=evaluate_sentence(sentence, correct_sentence)

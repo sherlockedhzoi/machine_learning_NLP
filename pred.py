@@ -65,19 +65,11 @@ class HMMPredictor(Base):
     def get_xi(self, alpha, beta, O):
         xi=[]
         for t in range(len(O)-1):
-            # print('get_xi:', self.A, sep='\n')
-            # nows=0
-            # for i in range(self.N):
-            #     for j in range(self.N):
-            #         nows+=alpha[t][i]*self.A[i][j]*self.B[j][O[t+1]]*beta[t+1][j]
-            #         print(nows)
             s=sum([alpha[t][i]*self.A[i][j]*self.B[j][O[t+1]]*beta[t+1][j] for i in range(self.N) for j in range(self.N)])
-            # print(alpha[t], beta[t+1], self.B[:,O[t+1]],s, sep='\n')
             xi.append(np.array([np.array([(alpha[t][i]*self.A[i][j]*self.B[j][O[t+1]]*beta[t+1][j]/s if s else 0)for j in range(self.N)]) for i in range(self.N)]))
         return np.array(xi)
 
     def step(self, datas):
-        # print(f'A: {self.A}', f'B: {self.B}', f'pi: {self.pi}', sep='\n')
         assert not(np.isnan(self.A).any() or np.isnan(self.B).any() or np.isnan(self.pi).any()), 'Nan in A, B, pi'
         assert len(self.A.nonzero()), 'A are all zeros'
         assert len(self.B.nonzero()), 'B are all zeros'
@@ -89,7 +81,6 @@ class HMMPredictor(Base):
             beta=self.get_beta(sentence)
             gamma.append(self.get_gamma(alpha, beta, sentence))
             xi.append(self.get_xi(alpha, beta, sentence))
-        # print(np.array(gamma).shape, np.array(xi).shape)
         print('Pre-calculation complete.')
         A, B=[], []
         for i in range(self.N):
@@ -116,7 +107,6 @@ class HMMPredictor(Base):
 
     def train(self):
         datas=self.ds.get_data()
-        # print(self.A.shape, self.B.shape, self.pi.shape)
         if self.ds.not_divided:
             for i in range(self.loop_lim):
                 loss=self.step(datas)

@@ -4,7 +4,6 @@ from utils import detag, Base
 
 class Dataset(Base):
     def __init__(self, _paths, encoder_decoder, not_divided=False, train=True):
-        # print(glob(ds_url))
         self.save_hyperparameters()
         self.data=[]
         for path in _paths:

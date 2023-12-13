@@ -88,7 +88,7 @@ class LetterDict:
                     self.letter2id[letter]=int(idx)
                     self.id2letter[int(idx)]=letter
         self.total_letter=len(self.letter2id)
-        # print(self.total_letter)
+        print('total_letter:', self.total_letter)
     
     def __len__(self):
         return self.total_letter

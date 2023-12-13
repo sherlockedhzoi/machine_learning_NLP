@@ -80,9 +80,7 @@ class Coder(Base):
         words=[]
         state=list(map(self.decode_state, state))
         for i in range(1,len(state)):
-            # print(state[i]['pos'])
             if state[i]['pos']=='B' or state[i]['pos']=='S':
-                # assert state[i-1]['pos']=='E' or state[i-1]['pos']=='S'
                 word=sentence[pre:i]
                 words.append({'word': word, 'tag': state[i-1]['tag'], 'prop': 'undefined' if self.with_tag else None})
                 pre=i
