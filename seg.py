@@ -1,5 +1,5 @@
 from math import log
-from param import Base
+from utils import Base
 
 class Segmentor(Base):
     def __init__(self, predictor, word_dict, with_tag=True):

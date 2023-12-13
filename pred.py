@@ -1,9 +1,8 @@
 from ds import Dataset
 from numpy.random import uniform
 import numpy as np
-from utils import err
+from utils import err, Base
 from math import log, exp
-from param import Base
 import json
 
 class HMMPredictor(Base):

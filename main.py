@@ -1,12 +1,11 @@
 from pred import HMMPredictor
 from ds import Dataset
 from dic import LetterDict, WordDict
-from param import HyperParam
 from seg import Segmentor
 from code import Coder
 from glob import glob
 from extractor import TextRank
-from utils import to_sentence, evaluate
+from utils import to_sentence, evaluate, HyperParam
 import argparse
 
 parser=argparse.ArgumentParser()

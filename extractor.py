@@ -1,6 +1,5 @@
-from param import Base
 import numpy as np
-from utils import important_pairs, categorize
+from utils import important_pairs, categorize, Base
 
 class TextRank(Base):
     def __init__(self, window=2, loop_lim=50):

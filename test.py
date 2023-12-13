@@ -3,7 +3,7 @@ from pred import HHMPredictor
 from code import Coder
 from ds import Dataset
 from glob import glob
-from param import HyperParam
+from utils import HyperParam
 
 letter_dict_url='data/word.dic'
 word_dict_url='data/dict.csv'

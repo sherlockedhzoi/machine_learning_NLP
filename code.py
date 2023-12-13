@@ -1,7 +1,6 @@
 import pandas as pd
 import string
-from param import Base
-from utils import detag
+from utils import Base, detag
 
 class Coder(Base):
     def __init__(self, letter_dict, word_dict, with_tag=False):

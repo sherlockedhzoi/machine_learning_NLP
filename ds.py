@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
-from param import Base
-from utils import detag
+from utils import detag, Base
 
 class Dataset(Base):
     def __init__(self, _paths, encoder_decoder, not_divided=False, train=True):
