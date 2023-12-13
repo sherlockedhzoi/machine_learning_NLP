@@ -1,17 +1,52 @@
+from editdistance import eval as levenshtein_distance
+
 err=1e-10
 def to_sentence(words):
+    print(words)
     line=''
     for word in words:
-        line+=word['word']+'/'+word['tag']+(
-            '('+','.join(word['prop'])+')' if word['prop']!='undefined' else '')+' '
+        # print(word['word'], word['tag'],word['prop'])
+        line+=word['word']+('/'+word['tag'] if word['tag'] else '')+(
+            '('+','.join(word['prop'])+')' if word['prop'] and word['prop']!='undefined' else '')+' '
     return line
 
+def detag(sentence):
+    return ''.join([word.split('[')[-1].split(']')[0].split('/')[0] for word in sentence.split('  ')])
+
 important_pairs={
-    'a->n': 10,
-    'uj->n': 10,
-    'n->uj': 0,
-    # ('ad', 'a'): 5,
-    # ('ad', 'v'): 5,
-    # ('v', 'n'): 2,
-    # ('zg', 'n'): 2
+    'v->n': 2, 'n->v': 2,
+    'a->n': 2, 'n->a': 2,
+    'ad->v': 2, 'v->ad': 2,
+    'ad->a': 2, 'a->ad': 2,
+    'nx->n': 0, 'nx->v': 0, 'nx->a': 0, 'nx->ad': 0, 'nx->prep': 0,
 }
+def categorize(tag):
+    if tag in ['in', 'jn', 'ln', 'm', 'mq', 'Ng', 'n', 'nr', 'nrf', 'nrg', 'ns', 'nt', 'nx', 'nz', 'Rg', 'r', 'rr', 'ry', 'ryw', 'rz', 'rzw', 's', 'Tg', 't', 'tt']:
+        return 'n'
+    elif tag in ['in', 'jv', 'lv', 'Vg', 'v', 'vd', 'vi', 'vl', 'vn', 'vq', 'vu', 'vx']:
+        return 'v'
+    elif tag in ['Ag', 'a', 'ad', 'an', 'ia', 'ja', 'la']:
+        return 'a'
+    elif tag in ['Dg', 'd', 'dc', 'df', 'f', 'id', 'jd', 'ld']:
+        return 'ad'
+    elif tag in ['c', 'p']:
+        return 'prep'
+    elif tag in ['nx', 'o', 'u', 'ud', 'ue', 'ui', 'ul', 'uo', 'us', 'uz', 'w', 'wd', 'wf', 'wj', 'wk', 'wky', 'wkz', 'wm', 'wp', 'ws', 'wt', 'wu', 'ww', 'wy', 'wyy', 'wyz', 'x', 'y', 'z']:
+        return 'nx'
+    else:
+        return tag
+
+def evaluate_sentence(sentence, correct_sentence):
+    return levenshtein_distance(sentence, correct_sentence)
+
+def evaluate(pred, ds):
+    loss=0
+    batch=ds.get_batch(50)
+    for line, correct_sentence in batch:
+        print(line)
+        words=pred.predict(line)
+        sentence=to_sentence(words)
+        nowloss=evaluate_sentence(sentence, correct_sentence)
+        print(line, 'sentence loss: ', nowloss)
+        loss+=nowloss/len(line)
+    return loss/50

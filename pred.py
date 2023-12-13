@@ -6,7 +6,7 @@ from math import log, exp
 from param import Base
 import json
 
-class HHMPredictor(Base):
+class HMMPredictor(Base):
     def __init__(self, N, M, T, code, ds=None, loop_lim=10):
         self.save_hyperparameters()
         self.letter_dict=self.code.letter_dict
@@ -19,16 +19,16 @@ class HHMPredictor(Base):
                 self.B=np.array([(self.B[i]/sum(self.B[i]) if sum(self.B[i]) else self.B[i]) for i in range(self.N)])
                 self.pi=self.pi/sum(self.pi)
             else:
-                self.cntA=np.ones((self.N, self.N))
-                self.cntB=np.ones((self.N, self.M))
-                self.cntpi=np.ones(self.N)
+                self.cntA=np.zeros((self.N, self.N))
+                self.cntB=np.zeros((self.N, self.M))
+                self.cntpi=np.zeros(self.N)
         else:
             try:
                 with open('data/cnt_dict.json','r') as f:
                     params=json.load(f)
-                self.cntA=params['cntA']
-                self.cntB=params['cntB']
-                self.cntpi=params['cntpi']
+                self.cntA=np.array(params['cntA'])
+                self.cntB=np.array(params['cntB'])
+                self.cntpi=np.array(params['cntpi'])
                 self.A=np.array([(self.cntA[i]/sum(self.cntA[i]) if sum(self.cntA[i]) else self.cntA[i]) for i in range(self.N)])
                 self.B=np.array([(self.cntB[i]/sum(self.cntB[i]) if sum(self.cntB[i]) else self.cntB[i]) for i in range(self.N)])
                 self.pi=self.cntpi/sum(self.cntpi)
@@ -36,9 +36,9 @@ class HHMPredictor(Base):
                 try:
                     with open('data/state_dict.json', 'r') as f:
                         params=json.load(f)
-                    self.A=params['A']
-                    self.B=params['B']
-                    self.pi=params['pi']
+                    self.A=np.array(params['A'])
+                    self.B=np.array(params['B'])
+                    self.pi=np.array(params['pi'])
                 except:
                     raise RuntimeError('no state_dict exists.')
 
@@ -154,9 +154,9 @@ class HHMPredictor(Base):
             endstate=frm[t][endstate]
             I.append(endstate)
         I=I[::-1]
-        # for i in I:
-        #     print(self.code.decode_state(i), end=' ')
-        # print()
+        for i in I:
+            print(self.code.decode_state(i), end=' ')
+        print()
         return self.code.decode_sentence(I, sentence)
 
     def save(self):

@@ -1,6 +1,7 @@
 import pandas as pd
 import string
 from param import Base
+from utils import detag
 
 class Coder(Base):
     def __init__(self, letter_dict, word_dict, with_tag=False):
@@ -9,6 +10,8 @@ class Coder(Base):
             self.tag_dict=pd.read_csv('./data/tag.csv')
             self.tag_cnt=len(self.tag_dict['tag'].to_list())
             print('tag_cnt:',self.tag_cnt)
+        else:
+            self.tag_cnt=1
 
     def encode_pos(self, pos) -> int:
         assert pos in ['M', 'B', 'E', 'S'], 'state must be M, B, E, or S'
@@ -16,7 +19,7 @@ class Coder(Base):
     def encode_tag(self, tag) -> int:
         assert tag in self.tag_dict['tag'].to_list(), 'tag %s not defined'%tag
         return (self.tag_dict['tag']==tag).to_numpy().squeeze().nonzero()[0]
-    def encode_word(self, word, pos, tag):
+    def encode_word(self, word, pos, tag=None):
         return {
             'id': self.letter_dict.get_id(word),
             'word': word,
@@ -25,21 +28,31 @@ class Coder(Base):
     def encode_sentence(self, line, not_divided=False):
         encoded_sentence=[]
         if not_divided:
-            sentence=''.join(line.strip().split('  '))
+            sentence=detag(line)
             for letter in sentence:
                 encoded_sentence.append(self.letter_dict.get_id(letter))
         else:
-            words=line.split('  ')
-            for w in words[1:]:
+            words=line.split(' ')
+            for w in words:
                 if w.strip()=='': continue
-                word, tag=w.strip().split('[')[-1].split(']')[0].split('/')
-                if len(word)==1: 
-                    encoded_sentence.append(self.encode_word(word, 'S', tag))
+                if self.with_tag:
+                    word, tag=w.strip().split('[')[-1].split(']')[0].split('/')
+                    if len(word)==1: 
+                        encoded_sentence.append(self.encode_word(word, 'S', tag))
+                    else:
+                        encoded_sentence.append(self.encode_word(word[0], 'B', tag))
+                        for letter in word[1:-1]:
+                            encoded_sentence.append(self.encode_word(letter, 'M', tag))
+                        encoded_sentence.append(self.encode_word(word[-1], 'E', tag))
                 else:
-                    encoded_sentence.append(self.encode_word(word[0], 'B', tag))
-                    for letter in word[1:-1]:
-                        encoded_sentence.append(self.encode_word(letter, 'M', tag))
-                    encoded_sentence.append(self.encode_word(word[-1], 'E', tag))
+                    word=w.strip()
+                    if len(word)==1: 
+                        encoded_sentence.append(self.encode_word(word, 'S'))
+                    else:
+                        encoded_sentence.append(self.encode_word(word[0], 'B'))
+                        for letter in word[1:-1]:
+                            encoded_sentence.append(self.encode_word(letter, 'M'))
+                        encoded_sentence.append(self.encode_word(word[-1], 'E'))
         return encoded_sentence
 
     def is_begin(self, tag):
@@ -70,10 +83,10 @@ class Coder(Base):
         for i in range(1,len(state)):
             # print(state[i]['pos'])
             if state[i]['pos']=='B' or state[i]['pos']=='S':
-                assert state[i-1]['pos']=='E' or state[i-1]['pos']=='S'
+                # assert state[i-1]['pos']=='E' or state[i-1]['pos']=='S'
                 word=sentence[pre:i]
-                words.append({'word': word, 'tag': state[i-1]['tag'], 'prop': 'undefined'})
+                words.append({'word': word, 'tag': state[i-1]['tag'], 'prop': 'undefined' if self.with_tag else None})
                 pre=i
         word=sentence[pre:]
-        words.append({'word': word, 'tag': state[-1]['tag'], 'prop': 'undefined'})
+        words.append({'word': word, 'tag': state[-1]['tag'], 'prop': 'undefined' if self.with_tag else None})
         return words
