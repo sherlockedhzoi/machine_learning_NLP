@@ -2,7 +2,7 @@ from editdistance import eval as levenshtein_distance
 
 err=1e-10
 def to_sentence(words):
-    print(words)
+    # print(words)
     line=''
     for word in words:
         # print(word['word'], word['tag'],word['prop'])
@@ -43,7 +43,7 @@ def evaluate(pred, ds):
     loss=0
     batch=ds.get_batch(50)
     for line, correct_sentence in batch:
-        print(line)
+        # print(line)
         words=pred.predict(line)
         sentence=to_sentence(words)
         nowloss=evaluate_sentence(sentence, correct_sentence)

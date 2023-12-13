@@ -154,9 +154,9 @@ class HMMPredictor(Base):
             endstate=frm[t][endstate]
             I.append(endstate)
         I=I[::-1]
-        for i in I:
-            print(self.code.decode_state(i), end=' ')
-        print()
+        # for i in I:
+        #     print(self.code.decode_state(i), end=' ')
+        # print()
         return self.code.decode_sentence(I, sentence)
 
     def save(self):
