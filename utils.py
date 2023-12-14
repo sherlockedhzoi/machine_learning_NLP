@@ -5,7 +5,6 @@ class HyperParam:
     def __init__(self, **kwargs):
         for k,v in kwargs.items():
             setattr(self, k, v)
-
 class Base:
     def save_hyperparameters(self, ignore=[]):
         frame=inspect.currentframe().f_back
@@ -15,7 +14,6 @@ class Base:
             setattr(self, k, v)
 
 err=1e-10
-
 def detag(sentence):
     return ''.join([word.split('[')[-1].split(']')[0].split('/')[0] for word in sentence.split('  ')])
 
@@ -45,5 +43,15 @@ def categorize(tag):
 def evaluate_sentence(sentence, correct_sentence):
     return levenshtein_distance(sentence, correct_sentence)
 
-def evaluate(pred, ds, encoder_decoder):
-    raise NotImplementedError
+def evaluate(pred, ds, code):
+    test_datas=ds.get_test_batch(batch_size=50)
+    loss=0
+    for right_sentence, detagged in test_datas:
+        letters, words, sentence=pred.predict(detagged)
+        right_words=pred.code.sentence2words(right_sentence)
+        right_letters=pred.code.words2letters(right_words)
+
+        # evaluate stuff
+        # ...
+
+    return loss

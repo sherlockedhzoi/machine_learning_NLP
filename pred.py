@@ -3,27 +3,28 @@ from numpy.random import uniform
 import numpy as np
 from utils import err, Base
 from math import log, exp
+from code import Coder
 import json
 
 class HMMPredictor(Base):
-    def __init__(self, N, M, T, code, ds=None, loop_lim=10):
+    def __init__(self, N, M, T, _letter_dict, _word_dict, ds=None, loop_lim=10, atom='letter', supervised=True, _with_tag=True):
         self.save_hyperparameters()
-        self.letter_dict=self.code.letter_dict
+        self.code=Coder(_letter_dict, _word_dict, _with_tag)
         if self.ds:
-            if self.ds.not_divided:
+            if self.supervised:
+                self.cntA=np.zeros((self.N, self.N))
+                self.cntB=np.zeros((self.N, self.M))
+                self.cntpi=np.zeros(self.N)
+            else:
                 self.A=uniform(size=(self.N, self.N))
                 self.B=uniform(size=(self.N, self.M))
                 self.pi=uniform(size=self.N)
                 self.A=np.array([(self.A[i]/sum(self.A[i]) if sum(self.A[i]) else self.A[i]) for i in range(self.N)])
                 self.B=np.array([(self.B[i]/sum(self.B[i]) if sum(self.B[i]) else self.B[i]) for i in range(self.N)])
                 self.pi=self.pi/sum(self.pi)
-            else:
-                self.cntA=np.zeros((self.N, self.N))
-                self.cntB=np.zeros((self.N, self.M))
-                self.cntpi=np.zeros(self.N)
         else:
             try:
-                with open('data/cnt_dict.json','r') as f:
+                with open(f'data/{atom}_cnt_dict.json','r') as f:
                     params=json.load(f)
                 self.cntA=np.array(params['cntA'])
                 self.cntB=np.array(params['cntB'])
@@ -33,13 +34,13 @@ class HMMPredictor(Base):
                 self.pi=self.cntpi/sum(self.cntpi)
             except:
                 try:
-                    with open('data/state_dict.json', 'r') as f:
+                    with open(f'data/{atom}_state_dict.json', 'r') as f:
                         params=json.load(f)
                     self.A=np.array(params['A'])
                     self.B=np.array(params['B'])
                     self.pi=np.array(params['pi'])
                 except:
-                    raise RuntimeError('no state_dict exists.')
+                    raise RuntimeError(f'no {atom}_state_dict exists.')
 
     def get_alpha(self, O):
         alpha=[]
@@ -69,7 +70,7 @@ class HMMPredictor(Base):
             xi.append(np.array([np.array([(alpha[t][i]*self.A[i][j]*self.B[j][O[t+1]]*beta[t+1][j]/s if s else 0)for j in range(self.N)]) for i in range(self.N)]))
         return np.array(xi)
 
-    def step(self, datas):
+    def step(self, datas): # TODO
         assert not(np.isnan(self.A).any() or np.isnan(self.B).any() or np.isnan(self.pi).any()), 'Nan in A, B, pi'
         assert len(self.A.nonzero()), 'A are all zeros'
         assert len(self.B.nonzero()), 'B are all zeros'
@@ -105,30 +106,31 @@ class HMMPredictor(Base):
         self.A, self.B, self.pi=A, B, pi
         return loss
 
-    def train(self):
+    def train(self): 
+        assert self.ds, 'You should have your dataset before training.'
         datas=self.ds.get_train_data()
-        if self.ds.not_divided:
-            for i in range(self.loop_lim):
-                loss=self.step(datas)
-                print(f'Update {i} time: loss {loss}')
-                if loss<err:
-                    break
-        else:
+        datas=[self.code.encode_sentence(data, train=self.supervised, end=self.atom) for data in datas]
+        if self.supervised:
             for sentence in datas:
                 for i in range(len(sentence)):
                     if self.code.is_begin(sentence[i]['tag']):
                         self.cntpi[sentence[i]['tag']]+=1
                     if i<len(sentence)-1:
                         self.cntA[sentence[i]['tag']][sentence[i+1]['tag']]+=1
-                    self.cntB[sentence[i]['tag']][sentence[i]['id']]+=1
-            
+                    self.cntB[sentence[i]['tag']][sentence[i]['ID']]+=1
             self.A=np.array([(self.cntA[i]/sum(self.cntA[i]) if sum(self.cntA[i]) else self.cntA[i]) for i in range(self.N)])
             self.B=np.array([(self.cntB[i]/sum(self.cntB[i]) if sum(self.cntB[i]) else self.cntB[i]) for i in range(self.N)])
             self.pi=self.cntpi/sum(self.cntpi)
+        else:
+            for i in range(self.loop_lim):
+                loss=self.step(datas)
+                print(f'Update {i} time: loss {loss}')
+                if loss<err:
+                    break
     
-    def predict(self, line, begin_pos=0):
+    def predict(self, line):
         assert self.A is not None and self.B is not None and self.pi is not None, 'model need to be trained'
-        O=self.code.encode_states(line, sentence2states(line))
+        O=self.code.encode_sentence(line, train=False, end=self.atom)
         logp=[np.array([-np.log(self.pi[i])-np.log(self.B[i][O[0]]) for i in range(self.N)])]
         frm=[np.array([])]
         for t in range(1, len(O)):
@@ -143,16 +145,14 @@ class HMMPredictor(Base):
             endstate=frm[t][endstate]
             I.append(endstate)
         I=I[::-1]
-        # for i in I:
-        #     print(self.code.decode_state(i), end=' ')
-        # print()
-        return I, self.code.decode_states(I, sentence)
+        sentence=[{'ID': ID, 'tag': tag} for ID, tag in zip(O,I)]
+        return self.code.decode_sentence(sentence, atom=self.atom)
 
     def save(self):
         assert self.ds is not None, 'need to train before saving'
-        if self.ds.not_divided:
-            with open('data/state_dict.json','w') as f:
-                json.dump({'A': self.A.tolist(), 'B': self.B.tolist(), 'pi': self.pi.tolist()}, f, indent='\t')
-        else:
+        if self.supervised:
             with open('data/cnt_dict.json','w') as f:
                 json.dump({'cntA': self.cntA.tolist(), 'cntB': self.cntB.tolist(), 'cntpi': self.cntpi.tolist()}, f, indent='\t')
+        else:
+            with open('data/state_dict.json','w') as f:
+                json.dump({'A': self.A.tolist(), 'B': self.B.tolist(), 'pi': self.pi.tolist()}, f, indent='\t')

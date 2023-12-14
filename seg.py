@@ -37,15 +37,15 @@ class Segmentor(Base):
         while l<N:
             r=max_to[l][1]+1
             now_word=line[l:r]
-            if self.word_dict.find(now_word) is not None:
+            if self.word_dict.get_id(now_word)!=self.word_dict.unk:
                 if buf:
                     predict_result=self.predictor.predict(buf)
                     words+=predict_result
                     buf=''
                 words.append({
                     'word': now_word,
-                    'tag': self.word_dict.get_tag(now_word) if self.with_tag else None,
-                    'prop': self.word_dict.get_prop(now_word) if self.with_tag else None
+                    'tag': self.word_dict.get_attr(now_word, 'tag') if self.with_tag else None,
+                    'prop': self.word_dict.get_attr(now_word, 'prop') if self.with_tag else None
                 })
             else:
                 buf+=now_word

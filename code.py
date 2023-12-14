@@ -60,7 +60,7 @@ class Sentence22Letters:
         return ''.join([l['letter'] for l in letters])
     
 def Coder(Sentence22Words, Words22Letters, Sentence22Letters, Base):
-    def __init__(self, letter_dict, word_dict, not_divided=False, with_tag=True):
+    def __init__(self, letter_dict, word_dict, with_tag=True):
         self.save_hyperparameters()        
         if self.with_tag:
             self.tag_dict=pd.read_csv('./data/tag.csv')
@@ -89,17 +89,17 @@ def Coder(Sentence22Words, Words22Letters, Sentence22Letters, Base):
             'ID': self.letter_dict.get_id(letter),
             'tag': self.encode_tag(tag)*4+self.encode_pos(pos)
         }
-    def encode_sentence(self, sentence, train=True, end='letter'):
-        assert end in ['letter','word'], f'Don\'t accept ends other than word/letter, but received {end}'
+    def encode_sentence(self, sentence, train=True, not_divided=False, atom='letter'):
+        assert atom in ['letter','word'], f'Don\'t accept atoms other than word/letter, but received {atom}'
         if train:
             words=self.sentence2words(sentence)
             letters=self.words2letters(words)
-            if end=='word':
+            if atom=='word':
                 return list(map(self.encode_words, words))
             else:
                 return list(map(self.encode_letter, letters))
         else:
-            if end=='word':
+            if atom=='word':
                 words=self.sentence2words(sentence)
                 words=list(map(self.encode_word, words))
                 return [word['ID'] for word in words]
@@ -129,15 +129,16 @@ def Coder(Sentence22Words, Words22Letters, Sentence22Letters, Base):
             'tag': self.decode_tag(state//4) if self.with_tag else None,
             'prop': 'undefined' if self.with_tag else None
         }
-    def decode_sentence(self, sentence, frm='letter', end='sentence'):
-        assert frm in ['letter', 'word'], f'frm has to be either "letter" or "word", but received {frm}'
-        assert end in ['word', 'sentence'], f'end has to be either "word" or "sentence", but received {end}'
-        if frm=='letter':
+    def decode_sentence(self, sentence, atom='letter'):
+        assert atom in ['letter', 'word'], f'frm has to be either "letter" or "word", but received {atom}'
+        assert end in ['word', 'sentence'], f'atom has to be either "word" or "sentence", but received {end}'
+        if atom=='letter':
             letters=self.decode_letters(sentence)
             words=self.letters2words(letters)
         else:
-            words=self.decode_letters(sentence)
-        return self.words2sentence(words) if end=='sentence' else words
+            letters=None
+            words=self.decode_words(sentence)
+        return letters, words, self.words2sentence(words)
 
     def is_begin(self, tag):
         return self.decode_state(tag)['pos'] in ['B', 'S']

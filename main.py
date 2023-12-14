@@ -21,6 +21,8 @@ ds_url=['data/PeopleDaily199801.txt'] if arg.with_tag else glob('data/training/*
 
 letter_dict=LetterDict(letter_dict_url)
 word_dict=WordDict(word_dict_url)
+letter_cnt=len(letter_dict)
+word_cnt=len(word_dict)
 encoder_decoder=Coder(letter_dict, word_dict, with_tag=arg.with_tag)
 if arg.retrain:
     train_ds=Dataset(ds_url, encoder_decoder, not_divided=arg.not_divided, test_length=100)
