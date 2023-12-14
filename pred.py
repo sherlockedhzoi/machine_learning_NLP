@@ -106,7 +106,7 @@ class HMMPredictor(Base):
         return loss
 
     def train(self):
-        datas=self.ds.get_data()
+        datas=self.ds.get_train_data()
         if self.ds.not_divided:
             for i in range(self.loop_lim):
                 loss=self.step(datas)
@@ -126,9 +126,9 @@ class HMMPredictor(Base):
             self.B=np.array([(self.cntB[i]/sum(self.cntB[i]) if sum(self.cntB[i]) else self.cntB[i]) for i in range(self.N)])
             self.pi=self.cntpi/sum(self.cntpi)
     
-    def predict(self, sentence, begin_pos=0):
+    def predict(self, line, begin_pos=0):
         assert self.A is not None and self.B is not None and self.pi is not None, 'model need to be trained'
-        O=self.code.encode_sentence(sentence, not_divided=True)
+        O=self.code.encode_states(line, sentence2states(line))
         logp=[np.array([-np.log(self.pi[i])-np.log(self.B[i][O[0]]) for i in range(self.N)])]
         frm=[np.array([])]
         for t in range(1, len(O)):
@@ -146,10 +146,10 @@ class HMMPredictor(Base):
         # for i in I:
         #     print(self.code.decode_state(i), end=' ')
         # print()
-        return self.code.decode_sentence(I, sentence)
+        return I, self.code.decode_states(I, sentence)
 
     def save(self):
-        assert self.ds, 'need to train before saving'
+        assert self.ds is not None, 'need to train before saving'
         if self.ds.not_divided:
             with open('data/state_dict.json','w') as f:
                 json.dump({'A': self.A.tolist(), 'B': self.B.tolist(), 'pi': self.pi.tolist()}, f, indent='\t')

@@ -15,12 +15,12 @@ class Segmentor(Base):
             to.append([])
             while now<len(sentence) and self.word_dict.step(sentence[now]):
                 if self.word_dict.reach_end():
-                    to[i].append((now, self.word_dict.get_attr()['freq']))
+                    to[i].append((now, self.word_dict.get_now_freq()))
                 now+=1
         return to
 
     def calc_max(self, to):
-        log_total=log(self.word_dict.total_freq)
+        log_total=log(self.word_dict.get_total_freq())
         max_to=[None]*len(to)
         for u in range(len(to)-1,-1,-1):
             max_to[u]=min((-log(freq)+log_total+(max_to[v+1][0] if v+1<len(to) else 0),v) for v,freq in to[u]) if len(to[u]) else (0,u)

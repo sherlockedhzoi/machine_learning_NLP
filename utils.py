@@ -15,12 +15,6 @@ class Base:
             setattr(self, k, v)
 
 err=1e-10
-def to_sentence(words):
-    line=''
-    for word in words:
-        line+=word['word']+('/'+word['tag'] if word['tag'] else '')+(
-            '('+','.join(word['prop'])+')' if word['prop'] and word['prop']!='undefined' else '')+' '
-    return line
 
 def detag(sentence):
     return ''.join([word.split('[')[-1].split(']')[0].split('/')[0] for word in sentence.split('  ')])
@@ -51,13 +45,5 @@ def categorize(tag):
 def evaluate_sentence(sentence, correct_sentence):
     return levenshtein_distance(sentence, correct_sentence)
 
-def evaluate(pred, ds):
-    loss=0
-    batch=ds.get_batch(50)
-    for line, correct_sentence in batch:
-        words=pred.predict(line)
-        sentence=to_sentence(words)
-        nowloss=evaluate_sentence(sentence, correct_sentence)
-        print(line, 'sentence loss: ', nowloss)
-        loss+=nowloss/len(line)
-    return loss/50
+def evaluate(pred, ds, encoder_decoder):
+    raise NotImplementedError
