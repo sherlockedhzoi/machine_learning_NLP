@@ -16,7 +16,7 @@ parser.add_argument('--atom', default='letter', help='whether predict on letters
 parser.add_argument('--eval', action='store_true', help='if output evaluate result')
 arg=parser.parse_args()
 assert arg.atom in ['letter', 'word'], 'atom must be letter or word'
-assert not(not arg.with_tag and arg.not_divided and arg.atom=='letter'), 'illegal atom state'
+assert not(not arg.with_tag and not arg.not_divided and arg.atom=='letter'), 'illegal atom state'
 supervised=(arg.with_tag and not arg.not_divided)
 
 letter_dict_url='data/letters.dic'
