@@ -77,6 +77,7 @@ class HMMPredictor(Base):
         gamma=[]
         xi=[]
         for sentence in datas:
+            # print(sentence)
             alpha=self.get_alpha(sentence)
             beta=self.get_beta(sentence)
             gamma.append(self.get_gamma(alpha, beta, sentence))
@@ -125,7 +126,7 @@ class HMMPredictor(Base):
             self.pi=self.cntpi/sum(self.cntpi)
         else:
             for i in range(self.loop_lim):
-                loss=self.step(datas)
+                loss=self.step(sentences)
                 print(f'Update {i} time: loss {loss}')
                 if loss<err:
                     break

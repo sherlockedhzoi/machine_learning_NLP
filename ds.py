@@ -3,7 +3,7 @@ import numpy as np
 from utils import detag, Base
 
 class Dataset(Base):
-    def __init__(self, _paths, with_tag=True, test_size=100):
+    def __init__(self, _paths, not_divided=False, with_tag=True, test_size=100):
         self.save_hyperparameters()
 
         lines=[]
@@ -16,6 +16,8 @@ class Dataset(Base):
         self.train_size=len(self.train_data)
         self.maxlen=max([len(detag(x)) for x in self.train_data+self.test_data])
 
+        if self.not_divided:
+            self.train_data=[detag(sentence) for sentence in self.train_data]
         self.test_data=[(sentence, detag(sentence)) for sentence in self.test_data]
 
         # print(self.train_data[:10], self.test_data[:10])

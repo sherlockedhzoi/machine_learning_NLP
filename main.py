@@ -32,7 +32,7 @@ letter_dict=LetterDict(letter_dict_url)
 word_dict=WordDict(word_dict_url)
 tag_dict=TagDict(tag_dict_url)
 encoder_decoder=Coder(letter_dict, word_dict, tag_dict)
-ds=Dataset(ds_url, with_tag=arg.with_tag, test_size=100)
+ds=Dataset(ds_url, not_divided=arg.not_divided, with_tag=arg.with_tag, test_size=100)
 print('Data load complete.')
 
 if arg.retrain:
