@@ -43,15 +43,27 @@ def categorize(tag):
 def evaluate_sentence(sentence, correct_sentence):
     return levenshtein_distance(sentence, correct_sentence)
 
+def count_pos_acc(letters, right_letters):
+    return sum([1 for i, j in zip(letters, right_letters) if i == j]) / len(letters)
+
 def evaluate(pred, ds, code):
     test_datas=ds.get_test_batch(batch_size=50)
     loss=0
     for right_sentence, detagged in test_datas:
         letters, words, sentence=pred.predict(detagged)
         right_words=pred.code.sentence2words(right_sentence)
-        right_letters=pred.code.words2letters(right_words)
+
+        if letters is not None:
+            right_letters=pred.code.words2letters(right_words)
+            pos_acc+=count_pos_acc(letters, right_letters)
+            print(right_sentence, 'pos accuracy:', pos_acc)
+        if pred.code.with_tag:
+            tag_acc+=count_tag_acc(letters, right_letters)
+            print(right_sentence, 'tag accuracy:', tag_acc)
 
         # evaluate stuff
         # ...
-
-    return loss
+    assert pos_acc>0 or tag_acc>0, 'No evaluation data!'
+    pos_acc/=len(test_datas)
+    tag_acc/=len(test_datas)
+    return pos_acc, tag_acc

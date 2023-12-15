@@ -40,7 +40,9 @@ else:
 seg=Segmentor(pred, word_dict, with_tag=arg.with_tag)
 extr=TextRank(window=2)
 
-print('loss: ', evaluate(pred, test_ds))
+pos_acc, tag_acc=evaluate_sentence(pred, ds, encoder_decoder)
+if pos_acc: print('Average pos accuracy:', pos_acc)
+if tag_acc: print('Average tag accuracy:', tag_acc)
 
 with open('test.txt','r', encoding='utf-8') as f:
     lines=f.readlines()
