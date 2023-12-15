@@ -7,9 +7,8 @@ from code import Coder
 import json
 
 class HMMPredictor(Base):
-    def __init__(self, N, M, T, _letter_dict, _word_dict, ds=None, loop_lim=10, atom='letter', supervised=True, _with_tag=True):
+    def __init__(self, N, M, T, code, ds=None, loop_lim=10, atom='letter', supervised=True):
         self.save_hyperparameters()
-        self.code=Coder(_letter_dict, _word_dict, _with_tag)
         if self.ds:
             if self.supervised:
                 self.cntA=np.zeros((self.N, self.N))
@@ -70,7 +69,7 @@ class HMMPredictor(Base):
             xi.append(np.array([np.array([(alpha[t][i]*self.A[i][j]*self.B[j][O[t+1]]*beta[t+1][j]/s if s else 0)for j in range(self.N)]) for i in range(self.N)]))
         return np.array(xi)
 
-    def step(self, datas): # TODO
+    def step(self, datas):
         assert not(np.isnan(self.A).any() or np.isnan(self.B).any() or np.isnan(self.pi).any()), 'Nan in A, B, pi'
         assert len(self.A.nonzero()), 'A are all zeros'
         assert len(self.B.nonzero()), 'B are all zeros'
@@ -109,12 +108,15 @@ class HMMPredictor(Base):
     def train(self): 
         assert self.ds, 'You should have your dataset before training.'
         datas=self.ds.get_train_data()
-        datas=[self.code.encode_sentence(data, train=self.supervised, end=self.atom) for data in datas]
+        sentences=[self.code.encode_sentence(data, train=self.supervised, atom=self.atom) for data in datas]
+        # print(sentences[0], datas[0])
         if self.supervised:
-            for sentence in datas:
+            for sentence in sentences:
                 for i in range(len(sentence)):
-                    if self.code.is_begin(sentence[i]['tag']):
-                        self.cntpi[sentence[i]['tag']]+=1
+                    if self.atom=='letter':
+                        self.cntpi[sentence[i]['tag']]+=self.code.is_begin(sentence[i]['tag'])
+                    else:
+                        self.cntpi[sentence[i]['tag']]+=(i==0)
                     if i<len(sentence)-1:
                         self.cntA[sentence[i]['tag']][sentence[i+1]['tag']]+=1
                     self.cntB[sentence[i]['tag']][sentence[i]['ID']]+=1
@@ -130,7 +132,8 @@ class HMMPredictor(Base):
     
     def predict(self, line):
         assert self.A is not None and self.B is not None and self.pi is not None, 'model need to be trained'
-        O=self.code.encode_sentence(line, train=False, end=self.atom)
+        O=self.code.encode_sentence(line, train=False, atom=self.atom)
+        # print(O, self.pi.nonzero(), self.B[:,O[0]].nonzero(), (self.pi*self.B[:,O[0]]).nonzero(), self.code.letter_dict[O[0]])
         logp=[np.array([-np.log(self.pi[i])-np.log(self.B[i][O[0]]) for i in range(self.N)])]
         frm=[np.array([])]
         for t in range(1, len(O)):
@@ -139,7 +142,7 @@ class HMMPredictor(Base):
             logp.append(nowlogp.min(axis=1))
             frm.append(nowlogp.argmin(axis=1))
         
-        endstate=logp[-1][self.code.get_all_ends()].argmin()
+        endstate=logp[-1][self.code.get_all_ends()].argmin() if self.atom=='letter' else logp[-1].argmin()
         I=[endstate]
         for t in range(len(O)-1,0,-1):
             endstate=frm[t][endstate]
@@ -151,8 +154,8 @@ class HMMPredictor(Base):
     def save(self):
         assert self.ds is not None, 'need to train before saving'
         if self.supervised:
-            with open('data/cnt_dict.json','w') as f:
+            with open(f'data/{self.atom}_cnt_dict.json','w') as f:
                 json.dump({'cntA': self.cntA.tolist(), 'cntB': self.cntB.tolist(), 'cntpi': self.cntpi.tolist()}, f, indent='\t')
         else:
-            with open('data/state_dict.json','w') as f:
+            with open(f'data/{self.atom}_state_dict.json','w') as f:
                 json.dump({'A': self.A.tolist(), 'B': self.B.tolist(), 'pi': self.pi.tolist()}, f, indent='\t')

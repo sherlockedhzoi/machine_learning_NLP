@@ -9,17 +9,19 @@ class Sentence22Words:
             if w.strip()=='': continue
             if '/' in w:
                 word, tag=w.strip().split('[')[-1].split(']')[0].split('/')
-                prop='undefined'
+                prop='<unk>'
             else:
                 word, tag=w.strip(), None
                 prop=None
+            # print(word, end=' ')
             yield {'word': word, 'tag': tag, 'prop': prop}
+        # print()
 
     def words2sentence(self, words):
         line=''
         for word in words:
             line+=word['word']+('/'+word['tag'] if word['tag'] else '')+(
-                '('+','.join(word['prop'])+')' if word['prop'] and word['prop']!='undefined' else '')+' '
+                '('+','.join(word['prop'])+')' if word['prop'] and word['prop']!='<unk>' else '')+' '
         return line
 
                 
@@ -28,14 +30,13 @@ class Words22Letters:
         letter2dict=lambda letter, pos, tag, prop: {'letter': letter, 'pos': pos, 'tag': tag, 'prop': prop}
         for w in words:
             word, tag, prop=w.values()
-            for letter in word[1:-1]:
-                if len(word)==1: 
-                    yield letter2dict(word, 'S', tag, prop)
-                else:
-                    yield letter2dict(word[0], 'B', tag, prop)
-                    for letter in word[1:-1]:
-                        yield letter2dict(letter, 'M', tag, prop)
-                    yield letter2dict(word[-1], 'E', tag, prop)
+            if len(word)==1: 
+                yield letter2dict(word, 'S', tag, prop)
+            else:
+                yield letter2dict(word[0], 'B', tag, prop)
+                for letter in word[1:-1]:
+                    yield letter2dict(letter, 'M', tag, prop)
+                yield letter2dict(word[-1], 'E', tag, prop)
 
     def letters2words(self, letters):
         word2dict=lambda word, tag, prop: {'word': word, 'tag': tag, 'prop': prop}
@@ -59,15 +60,15 @@ class Sentence22Letters:
     def letters2sentence(self, letters):
         return ''.join([l['letter'] for l in letters])
     
-def Coder(Sentence22Words, Words22Letters, Sentence22Letters, Base):
-    def __init__(self, letter_dict, word_dict, with_tag=True):
+class Coder(Sentence22Words, Words22Letters, Sentence22Letters, Base):
+    def __init__(self, letter_dict, word_dict, tag_dict=None):
         self.save_hyperparameters()        
-        if self.with_tag:
-            self.tag_dict=pd.read_csv('./data/tag.csv')
-            self.tag_cnt=len(self.tag_dict['tag'].to_list())
-            print('tag_cnt:',self.tag_cnt)
+        if self.tag_dict:
+            self.tag_cnt=len(self.tag_dict)
+            self.with_tag=True
         else:
             self.tag_cnt=1
+            self.with_tag=False
 
     def encode_pos(self, pos) -> int:
         assert pos in ['M', 'B', 'E', 'S'], 'state must be M, B, E, or S'
@@ -75,8 +76,9 @@ def Coder(Sentence22Words, Words22Letters, Sentence22Letters, Base):
     def encode_tag(self, tag) -> int:
         if tag is None: return 0
         else:
-            assert tag in self.tag_dict['tag'].to_list(), 'tag %s not defined'%tag
-            return (self.tag_dict['tag']==tag).to_numpy().squeeze().nonzero()[0]
+            ID=self.tag_dict.get_id(tag)
+            assert ID!=None, f'tag {tag} is not in tag_dict'
+            return ID
     def encode_words(self, word):
         word, tag, prop=word.values()
         return {
@@ -89,7 +91,7 @@ def Coder(Sentence22Words, Words22Letters, Sentence22Letters, Base):
             'ID': self.letter_dict.get_id(letter),
             'tag': self.encode_tag(tag)*4+self.encode_pos(pos)
         }
-    def encode_sentence(self, sentence, train=True, not_divided=False, atom='letter'):
+    def encode_sentence(self, sentence, train=True, atom='letter'):
         assert atom in ['letter','word'], f'Don\'t accept atoms other than word/letter, but received {atom}'
         if train:
             words=self.sentence2words(sentence)
@@ -101,47 +103,46 @@ def Coder(Sentence22Words, Words22Letters, Sentence22Letters, Base):
         else:
             if atom=='word':
                 words=self.sentence2words(sentence)
-                words=list(map(self.encode_word, words))
-                return [word['ID'] for word in words]
+                return [self.word_dict.get_id(word['word']) for word in words]
             else:
                 letters=self.sentence2letters(sentence)
-                letters=list(map(self.encode_letter, letters))
-                return [letter['ID'] for letter in letters]
+                return [self.letter_dict.get_id(letter['letter']) for letter in letters]
 
     def decode_pos(self, state) -> str:
         assert state in range(4)
         return ['M', 'B', 'E', 'S'][state]
     def decode_tag(self, state):
-        assert state in range(110) and self.tag_dict.iloc[state].loc['tag'] is not None, 'tag has to exist'
-        return self.tag_dict.iloc[state].loc['tag']
-    def decode_words(self, word, with_tag=True):
+        tag=self.tag_dict[state]
+        assert tag!='<unk>', 'Tag id out of range.'
+        return tag
+    def decode_word(self, word):
         ID, tag=word.values()
         return {
             'word': self.word_dict[ID],
-            'tag': self.decode_tag(state) if self.with_tag else None,
-            'prop': 'undefined' if self.with_tag else None
+            'tag': self.decode_tag(tag) if self.with_tag else None,
+            'prop': '<unk>' if self.with_tag else None
         }
-    def decode_letter(self, letter, with_tag=True):
+    def decode_letter(self, letter):
         ID, tag=letter.values()
         return {
             'letter': self.letter_dict[ID],
-            'pos': self.decode_pos(state%4),
-            'tag': self.decode_tag(state//4) if self.with_tag else None,
-            'prop': 'undefined' if self.with_tag else None
+            'pos': self.decode_pos(tag%4),
+            'tag': self.decode_tag(tag//4) if self.with_tag else None,
+            'prop': '<unk>' if self.with_tag else None
         }
     def decode_sentence(self, sentence, atom='letter'):
         assert atom in ['letter', 'word'], f'frm has to be either "letter" or "word", but received {atom}'
-        assert end in ['word', 'sentence'], f'atom has to be either "word" or "sentence", but received {end}'
         if atom=='letter':
-            letters=self.decode_letters(sentence)
-            words=self.letters2words(letters)
+            letters=list(map(self.decode_letter,sentence))
+            words=list(self.letters2words(letters))
         else:
-            letters=None
-            words=self.decode_words(sentence)
+            words=list(map(self.decode_word,sentence))
+            letters=list(self.words2letters(words))
+        # print(letters, words)
         return letters, words, self.words2sentence(words)
 
     def is_begin(self, tag):
-        return self.decode_state(tag)['pos'] in ['B', 'S']
+        return self.decode_pos(tag%4) in ['B', 'S']
     def get_all_ends(self):
         ends=[]
         for pos in ['E','S']:

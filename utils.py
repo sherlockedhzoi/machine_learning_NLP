@@ -15,7 +15,7 @@ class Base:
 
 err=1e-10
 def detag(sentence):
-    return ''.join([word.split('[')[-1].split(']')[0].split('/')[0] for word in sentence.split('  ')])
+    return ''.join([word.split('[')[-1].split(']')[0].split('/')[0] for word in sentence.split()])
 
 important_pairs={
     'v->n': 2, 'n->v': 2,
@@ -41,29 +41,15 @@ def categorize(tag):
         return tag
 
 def evaluate_sentence(sentence, correct_sentence):
-    return levenshtein_distance(sentence, correct_sentence)
+    return 1-levenshtein_distance(sentence, correct_sentence)/len(correct_sentence)
 
-def count_pos_acc(letters, right_letters):
-    return sum([1 for i, j in zip(letters, right_letters) if i == j]) / len(letters)
-
-def evaluate(pred, ds, code):
+def evaluate(seg, ds, code):
     test_datas=ds.get_test_batch(batch_size=50)
-    loss=0
+    sentence_acc=0
     for right_sentence, detagged in test_datas:
-        letters, words, sentence=pred.predict(detagged)
-        right_words=pred.code.sentence2words(right_sentence)
+        words=seg.forward(detagged)
+        sentence=code.words2sentence(words)
+        sentence_acc+=evaluate_sentence(sentence, right_sentence)
 
-        if letters is not None:
-            right_letters=pred.code.words2letters(right_words)
-            pos_acc+=count_pos_acc(letters, right_letters)
-            print(right_sentence, 'pos accuracy:', pos_acc)
-        if pred.code.with_tag:
-            tag_acc+=count_tag_acc(letters, right_letters)
-            print(right_sentence, 'tag accuracy:', tag_acc)
-
-        # evaluate stuff
-        # ...
-    assert pos_acc>0 or tag_acc>0, 'No evaluation data!'
-    pos_acc/=len(test_datas)
-    tag_acc/=len(test_datas)
-    return pos_acc, tag_acc
+    sentence_acc/=len(test_datas)
+    return sentence_acc
