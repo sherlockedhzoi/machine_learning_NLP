@@ -13,8 +13,8 @@ class Base:
         for k,v in self.hparams.items():
             setattr(self, k, v)
 
-err=1e-10
-def detag(sentence):
+err=1e-2
+def detag(sentence, sep=''):
     return ''.join([word.split('[')[-1].split(']')[0].split('/')[0] for word in sentence.split()])
 
 important_pairs={
@@ -45,11 +45,31 @@ def evaluate_sentence(sentence, correct_sentence):
 
 def evaluate(seg, ds, code):
     test_datas=ds.get_test_batch(batch_size=50)
-    sentence_acc=0
+    sentence_acc, pos_acc, tag_acc=0, 0, 0
     for right_sentence, detagged in test_datas:
-        words=seg.forward(detagged)
+        # print(detagged)
+        words=seg.predict(detagged)
         sentence=code.words2sentence(words)
+        letters=list(code.words2letters(words))
+        tags=[word['tag'] for word in words]
+        pos=[letter['pos'] for letter in letters]
+        
+        right_words=list(code.sentence2words(right_sentence))
+        right_letters=list(code.words2letters(right_words))
+        right_tags=[word['tag'] for word in right_words]
+        right_pos=[letter['pos'] for letter in right_letters]
+
+        # print('sentence:', sentence, 'right:', right_sentence)
+        # print('words:', words, 'right_words:', right_words)
+        # print('letters:', letters, 'right_letters:', right_letters)
+        # print('pos:', pos, 'right_pos:', right_pos)
+        # print('tags:', tags, 'right_tags:', right_tags)
+
+        pos_acc+=evaluate_sentence(pos, right_pos)
+        tag_acc+=evaluate_sentence(tags, right_tags)
         sentence_acc+=evaluate_sentence(sentence, right_sentence)
 
+    pos_acc/=len(test_datas)
+    tag_acc/=len(test_datas)
     sentence_acc/=len(test_datas)
-    return sentence_acc
+    return pos_acc, tag_acc, sentence_acc

@@ -4,8 +4,7 @@ from utils import Base
 class Segmentor(Base):
     def __init__(self, predictor, word_dict, with_tag=True):
         self.save_hyperparameters()
-        self.predict=(predictor is not None)
-        
+        assert self.predictor is not None, 'predictor must be specified'
     
     def get_DAG(self, sentence):
         to=[]
@@ -28,7 +27,7 @@ class Segmentor(Base):
             max_to[u]=min((-log(freq)+log_total+(max_to[v+1][0] if v+1<len(to) else 0),v) for v,freq in to[u]) if len(to[u]) else (0,u)
         return max_to
 
-    def forward(self, line):
+    def predict(self, line):
         line=line.strip()
         l=0
         N=len(line)
@@ -41,7 +40,8 @@ class Segmentor(Base):
             now_word=line[l:r]
             if self.word_dict.get_id(now_word)!=self.word_dict.unk:
                 if buf:
-                    pred_letters, pred_words, pred_sentence=self.predictor.predict(buf)
+                    pred_words=self.predictor.predict(buf)
+                    # print(buf, pred_words)
                     words+=pred_words
                     buf=''
                 words.append({
@@ -53,7 +53,8 @@ class Segmentor(Base):
                 buf+=now_word
             l=r
         if buf:
-            pred_letters, pred_words, pred_sentence=self.predictor.predict(buf)
+            pred_words=self.predictor.predict(buf)
+            # print(buf, pred_words)
             words+=pred_words
             buf=''
         return words

@@ -4,7 +4,6 @@ from utils import detag, Base
 
 class Dataset(Base):
     def __init__(self, _paths, not_divided=False, with_tag=True, test_size=100):
-        self.save_hyperparameters()
 
         lines=[]
         for path in _paths:
@@ -12,15 +11,16 @@ class Dataset(Base):
                 lines+=f.readlines()
 
         datas=[line.strip() for line in lines if line.strip()!='']
+        test_size=min(test_size,int(0.1*len(datas)))
+        self.save_hyperparameters()
         self.train_data, self.test_data=datas[test_size:], datas[:test_size]
         self.train_size=len(self.train_data)
         self.maxlen=max([len(detag(x)) for x in self.train_data+self.test_data])
 
         if self.not_divided:
-            self.train_data=[detag(sentence) for sentence in self.train_data]
-        self.test_data=[(sentence, detag(sentence)) for sentence in self.test_data]
+            self.train_data=[detag(sentence, sep=('' if self.not_divided else ' ')) for sentence in self.train_data]
+        self.test_data=[(sentence, detag(sentence, sep=('' if self.not_divided else ' '))) for sentence in self.test_data]
 
-        # print(self.train_data[:10], self.test_data[:10])
         print('training lines of data: ', self.train_size)
         print('test lines of data: ', self.test_size)
         print('maxlen: ', self.maxlen)

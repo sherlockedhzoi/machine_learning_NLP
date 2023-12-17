@@ -1,13 +1,13 @@
 from ds import Dataset
 from numpy.random import uniform
 import numpy as np
-from utils import err, Base
+from utils import err, Base, evaluate
 from math import log, exp
 from code import Coder
 import json
 
 class HMMPredictor(Base):
-    def __init__(self, N, M, T, code, ds=None, loop_lim=10, atom='letter', supervised=True):
+    def __init__(self, N, M, T, code, ds=None, atom='letter', supervised=True):
         self.save_hyperparameters()
         if self.ds:
             if self.supervised:
@@ -23,23 +23,23 @@ class HMMPredictor(Base):
                 self.pi=self.pi/sum(self.pi)
         else:
             try:
-                with open(f'data/{atom}_cnt_dict.json','r') as f:
-                    params=json.load(f)
-                self.cntA=np.array(params['cntA'])
-                self.cntB=np.array(params['cntB'])
-                self.cntpi=np.array(params['cntpi'])
-                self.A=np.array([(self.cntA[i]/sum(self.cntA[i]) if sum(self.cntA[i]) else self.cntA[i]) for i in range(self.N)])
-                self.B=np.array([(self.cntB[i]/sum(self.cntB[i]) if sum(self.cntB[i]) else self.cntB[i]) for i in range(self.N)])
-                self.pi=self.cntpi/sum(self.cntpi)
-            except:
-                try:
+                if supervised:
+                    with open(f'data/{atom}_cnt_dict.json','r') as f:
+                        params=json.load(f)
+                    self.cntA=np.array(params['cntA'])
+                    self.cntB=np.array(params['cntB'])
+                    self.cntpi=np.array(params['cntpi'])
+                    self.A=np.array([(self.cntA[i]/sum(self.cntA[i]) if sum(self.cntA[i]) else self.cntA[i]) for i in range(self.N)])
+                    self.B=np.array([(self.cntB[i]/sum(self.cntB[i]) if sum(self.cntB[i]) else self.cntB[i]) for i in range(self.N)])
+                    self.pi=self.cntpi/sum(self.cntpi)
+                else:
                     with open(f'data/{atom}_state_dict.json', 'r') as f:
                         params=json.load(f)
                     self.A=np.array(params['A'])
                     self.B=np.array(params['B'])
                     self.pi=np.array(params['pi'])
-                except:
-                    raise RuntimeError(f'no {atom}_state_dict exists.')
+            except:
+                raise RuntimeError(f'no {atom} state dict exists.')
 
     def get_alpha(self, O):
         alpha=[]
@@ -77,7 +77,6 @@ class HMMPredictor(Base):
         gamma=[]
         xi=[]
         for sentence in datas:
-            # print(sentence)
             alpha=self.get_alpha(sentence)
             beta=self.get_beta(sentence)
             gamma.append(self.get_gamma(alpha, beta, sentence))
@@ -86,31 +85,32 @@ class HMMPredictor(Base):
         A, B=[], []
         for i in range(self.N):
             nowA=[]
+            s1=sum([gamma[epoch][t][i] for epoch in range(len(datas)) for t in range(len(datas[epoch]))])
             for j in range(self.N):
-                s1=sum([gamma[epoch][t][i] for epoch in range(len(self.ds)) for t in range(len(datas[epoch]))])
-                s2=sum([xi[epoch][t][i][j] for epoch in range(len(self.ds)) for t in range(len(datas[epoch])-1)])
+                s2=sum([xi[epoch][t][i][j] for epoch in range(len(datas)) for t in range(len(datas[epoch])-1)])
                 nowA.append(s2/s1 if s1 else 0)
             A.append(np.array(nowA))
         print('A calculation done.')
         for j in range(self.N):
             nowB=[]
+            s1=sum([gamma[epoch][t][j] for epoch in range(len(datas)) for t in range(len(datas[epoch]))])
             for k in range(self.M):
-                s1=sum([gamma[epoch][t][j] for epoch in range(len(self.ds)) for t in range(len(datas[epoch]))])
-                s2=sum([gamma[epoch][t][j]*(datas[epoch][t]==k) for epoch in range(len(self.ds)) for t in range(len(datas[epoch]))])
+                s2=sum([gamma[epoch][t][j]*(datas[epoch][t]==k) for epoch in range(len(datas)) for t in range(len(datas[epoch]))])
                 nowB.append(s2/s1 if s1 else 0)
             B.append(np.array(nowB))
         print('B calculation done.')
-        pi=sum([gamma[epoch][t] for epoch in range(len(self.ds)) for t in range(len(datas[epoch])) if self.code.is_begin(datas[epoch][t])])
+        pi=[sum([gamma[epoch][t][i] for epoch in range(len(datas)) for t in range(len(datas[epoch])) if self.code.is_begin(datas[epoch][t])]) for i in range(self.N)]
+        print('pi calculation done.')
+
         A, B, pi=np.array(A), np.array(B), np.array(pi)
         loss=abs(self.A-A).sum()+abs(self.B-B).sum()+abs(self.pi-pi).sum()
         self.A, self.B, self.pi=A, B, pi
         return loss
 
-    def train(self): 
+    def train(self, loop_lim): 
         assert self.ds, 'You should have your dataset before training.'
         datas=self.ds.get_train_data()
         sentences=[self.code.encode_sentence(data, train=self.supervised, atom=self.atom) for data in datas]
-        # print(sentences[0], datas[0])
         if self.supervised:
             for sentence in sentences:
                 for i in range(len(sentence)):
@@ -125,7 +125,7 @@ class HMMPredictor(Base):
             self.B=np.array([(self.cntB[i]/sum(self.cntB[i]) if sum(self.cntB[i]) else self.cntB[i]) for i in range(self.N)])
             self.pi=self.cntpi/sum(self.cntpi)
         else:
-            for i in range(self.loop_lim):
+            for i in range(loop_lim):
                 loss=self.step(sentences)
                 print(f'Update {i} time: loss {loss}')
                 if loss<err:
@@ -134,7 +134,6 @@ class HMMPredictor(Base):
     def predict(self, line):
         assert self.A is not None and self.B is not None and self.pi is not None, 'model need to be trained'
         O=self.code.encode_sentence(line, train=False, atom=self.atom)
-        # print(O, self.pi.nonzero(), self.B[:,O[0]].nonzero(), (self.pi*self.B[:,O[0]]).nonzero(), self.code.letter_dict[O[0]])
         logp=[np.array([-np.log(self.pi[i])-np.log(self.B[i][O[0]]) for i in range(self.N)])]
         frm=[np.array([])]
         for t in range(1, len(O)):
@@ -143,7 +142,8 @@ class HMMPredictor(Base):
             logp.append(nowlogp.min(axis=1))
             frm.append(nowlogp.argmin(axis=1))
         
-        endstate=logp[-1][self.code.get_all_ends()].argmin() if self.atom=='letter' else logp[-1].argmin()
+        endstate=self.code.get_all_ends()[logp[-1][self.code.get_all_ends()].argmin()] if self.atom=='letter' else logp[-1].argmin()
+        # print(logp[-1], endstate)
         I=[endstate]
         for t in range(len(O)-1,0,-1):
             endstate=frm[t][endstate]

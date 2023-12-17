@@ -1,0 +1,50 @@
+我/r 想/v(td) 穿/zg 蓝色/n(ys) 的/uj 衣服/n(lb) 去/v 散步/n(ch) 。/w
+我/r 今天/t 要/v 去/v 跑步/n(ch) 。/w
+给/p 我/r 一件/m 去/v 商场/n(ch) 穿/zg 的/uj 上衣/n(lb) 。/w
+根据/p 我/r 的/uj 喜好/v ，/w 给/p 我/r 一套/m 散步/n(ch) 用/p 的/uj 衣服/n(lb) 。/w 
+一套/m 漂亮/a 的/uj 衣服/n(lb)
+帮/v 我/r 搭配/v 一套/m 适合/v(td) 出游/vn(ch) 的/uj 衣服/n(lb) 。/w
+帮/v 我/r 搭配/v 一套/m 适合/v(td) 出游/vn(ch) 的/uj 衣服/n(lb)
+我/r 需要/v 适合/v(td) 会议/n(ch) 穿/zg 的/uj 正装/n(lb) 。/w
+请/v 为/p 我/r 选择/v 一套/m 运动/vn(ch) 风格/n 的/uj 服装/vn(lb) 。/w
+今天/t 我/r 要/v 去/v 户外/s(ch) 骑行/v(ch) 。/w
+能/v 不能/v 帮/v 我/r 推荐/v 一套/m 淑女/n(fg) 风/n 的/uj 裙子/n ？/w
+耐脏/n(xj) 一些/m 就/d 好/a 
+海边/s(ch) 穿/zg 的/uj ，/w 防晒/v(xj) 的/uj ，/w 休闲/v(fg) 的/uj
+今天/t 有点/n 感冒/v ，/w 穿/zg 一件/m 保暖性/n 能/v 好/a 一点/m 的/uj 吧/y 。/w
+中性/n(fg) 风/n 的/uj 衣服/n(lb)
+我/r 今天/t 想/v(td) 穿/zg 浅色系/n(ys) 的/uj 裙子/n
+能/v 不能/v 根据/p 天气/n 帮/v 我/r 搭配/v 出/v 未来/t 一周/m 的/uj 穿/zg 搭/v ？/w
+为/p 我/r 生成/v 一套/m 适合/v(td) 参加/v 新年/t 晚会/n(ch) 的/uj 华丽/nr(fg) 穿/zg 搭/v ，/w 考虑/v 节日/t 氛围/n 。/w 
+生成/v 一套/m 适合/v(td) 参加/v 学术/n 研讨会/n(ch) 的/uj 正式/ad(fg) 穿/zg 搭/v ，/w 注重/v 专业/n 感/v 。/w
+为/p 我/r 推荐/v 一套/m 参加/v 派对/v 的/uj 穿/zg 搭/v ，/w 要求/v 优雅/a 又/d 不失/v 活力/n(fg) 。/w
+设计/vn 一套/m 适合/v(td) 参加/v 晚宴/n(ch) 的/uj 穿/zg 搭/v ，/w 包括/v 华丽/nr(fg) 的/uj 晚礼服/n(lb) 和/c 配饰/v(lb) 。/w 
+为/p 我/r 生成/v 一套/m 适合/v(td) 去/v 音乐会/nt 的/uj 时尚/n 穿/zg 搭/v ，/w 要求/v 有/v 活力/n(fg) 感/v 。/w
+生成/v 一套/m 具有/v 文艺/n(fg) 范/nr 儿/n 的/uj 穿/zg 搭/v ，/w 包括/v 宽松/a 的/uj 毛衣/n(lb) 、/w 文艺/n(fg) 裤/n 和/c 文艺/n(fg) 配饰/v(lb) 。/w
+为/p 我/r 设计/vn 一套/m 适合/v(td) 户外/s(ch) 野餐/n(ch) 的/uj 舒适/a(fg) 穿/zg 搭/v ，/w 要求/v 便于/v 活动/vn 和/c 食用/n 。/w 
+一套/m 极/d 简/a 主义/n 风格/n 的/uj 日常/d 穿/zg 搭/v ，/w 注重/v 简洁/a 和/c 实用性/n 。/w
+一套/m 复古/vn(fg) 风情/n 的/uj 周末/t 穿/zg 搭/v ，/w 考虑/v 搭配/v 一些/m 复古/vn(fg) 元素/n 。/w
+具有/v 未来/t 感/v 和/c 科技/n(fg) 感/v 的/uj 时尚/n 穿/zg 搭/v ，/w 可以/c 包括/v 一些/m 现代科技/n 元素/n 。/w 
+适合/v(td) 林间/n 漫步/vn(ch) 的/uj 户外/s(ch) 穿/zg 搭/v ，/w 注重/v 自然/d 元素/n 的/uj 融入/v 。/w
+为/p 我/r 推荐/v 一套/m 充满/a 城市/ns 摩登/nrt(fg) 感/v 的/uj 商务/n 穿/zg 搭/v ，/w 注重/v 职业/n(ch) 形象/n 。/w
+生成/v 一套/m 适合/v(td) 社交/n(ch) 媒体/n 分享/v 的/uj 时尚/n 穿/zg 搭/v ，/w 注重/v 独特/a 的/uj 搭配/v 和/c 颜色/n 搭配/v
+生成/v 一套/m 适合/v(td) 进行/v 城市/ns 探险/n(ch) 和/c 摄影/n 的/uj 穿/zg 搭/v ，/w 注重/v 舒适/a(fg) 、/w 便利/a(fg) 和/c 保护/v 相机/d 设备/vn 。/w 
+请/v 生成/v 一套/m 适合/v(td) 在/p 书店/n(ch) 安静/nr(fg) 阅读/v(ch) 的/uj 穿/zg 搭/v ，/w 强调/v 舒适性/nr(fg) 和/c 适应/v 长时间/l 坐姿/n 的/uj 特点/n 。/w
+适合/v(td) 在/p 极/d 寒/n 天气/n 穿/zg 的/uj 衣服/n(lb)
+星空/n 露营/v(ch) ，/w 注重/v 保暖/v(xj) ，/w 舒适/a(fg) 和/c 便利性/n
+生成/v 一套/m 适合/v(td) 在/p DIY/Ag 手工艺品/n 市集/n 摆摊/v 的/uj 穿/zg 搭/v ，/w 要求/v 既/c 舒适/a(fg) 又/d 具有/v 创意/v 感/v 。/w 
+适合/v(td) 在/p 艺术/n 工作室/n 创作/vn 的/uj 穿/zg 搭/v ，/w 注重/v 穿着/v 时/n 的/uj 便利/a(fg) 和/c 保护/v 。/w 
+适合/v(td) 在/p 植物园/n 漫步/vn(ch) 的/uj 穿/zg 搭/v ，/w 要求/v 颜色/n 搭配/v 能/v 与/p 自然/d 植物/n 相/v 协调/v 。/w
+我/r 想/v(td) 穿/zg 一套/m 体现/v 学生/n 气息/n 的/uj 衣服/n(lb)
+轻薄/a(xj) 透气/n(xj) 一些/m
+防水/v(xj) ，/w 透气/n(xj) ，/w 舒适/a(fg)
+请/v 生成/v 一套/m 适合/v(td) 春日/t 花园/n 漫步/vn(ch) 的/uj 轻盈/z(fg) 穿/zg 搭/v ，/w 注重/v 柔和/a 的/uj 色调/n 。/w 
+我/r 想要/v(td) 简单/a 一些/m 的/uj 搭配/v ，/w 不要/df 有/v 配饰/v(lb) ，/w 可以/c 加上/v 包包/v
+随机/d 生成/v 一套/m 小/a 众/ng 一些/m 的/uj 就/d 可以/c 。/w
+请/v 根据/p 我/r 的/uj 以往/t 偏好/d 生成/v 。/w
+符合/v 当前/t 台湾/ns 天气/n 的/uj 穿/zg 搭/v 推荐/v 。/w
+春季/t 舒适/a(fg) 防水/v(xj) 的/uj 穿/zg 搭/v ，/w 注重/v 透气性/n 和/c 防水/v(xj) 特性/n 。/w 
+想要/v(td) 一些/m 海洋/ns 元素/n
+室内外/s 温差/n 比较/d 大/a ，/w 帮/v 我/r 推荐/v 一套/m 合适/a 的/uj 搭配/v 吧/y 。/w
+不要/df 大众化/nz 的/uj 搭配/v ！/w
+显得/v 亲和力/n 高/a 一些/m ，/w 其他/r 随便/d

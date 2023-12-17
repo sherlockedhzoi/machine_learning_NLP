@@ -3,7 +3,7 @@ import string
 from utils import Base, detag
 
 class Sentence22Words:
-    def sentence2words(self, sentence):
+    def sentence2words(self, sentence) -> list:
         words=sentence.strip().split()
         for w in words:
             if w.strip()=='': continue
@@ -13,9 +13,7 @@ class Sentence22Words:
             else:
                 word, tag=w.strip(), None
                 prop=None
-            # print(word, end=' ')
             yield {'word': word, 'tag': tag, 'prop': prop}
-        # print()
 
     def words2sentence(self, words):
         line=''
@@ -26,7 +24,7 @@ class Sentence22Words:
 
                 
 class Words22Letters:
-    def words2letters(self, words):
+    def words2letters(self, words) -> list:
         letter2dict=lambda letter, pos, tag, prop: {'letter': letter, 'pos': pos, 'tag': tag, 'prop': prop}
         for w in words:
             word, tag, prop=w.values()
@@ -137,9 +135,8 @@ class Coder(Sentence22Words, Words22Letters, Sentence22Letters, Base):
             words=list(self.letters2words(letters))
         else:
             words=list(map(self.decode_word,sentence))
-            letters=list(self.words2letters(words))
         # print(letters, words)
-        return letters, words, self.words2sentence(words)
+        return words
 
     def is_begin(self, tag):
         return self.decode_pos(tag%4) in ['B', 'S']
