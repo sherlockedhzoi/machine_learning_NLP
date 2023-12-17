@@ -3,23 +3,26 @@ import numpy as np
 from utils import detag, Base
 
 class Dataset(Base):
-    def __init__(self, _paths, not_divided=False, with_tag=True, test_size=100):
-
+    def __init__(self, _train_paths, _test_paths, _atom='letter', _supervised=True):
+        self.save_hyperparameters()
         lines=[]
-        for path in _paths:
+        for path in _train_paths:
             with open(path, 'r', encoding='utf-8') as f:
                 lines+=f.readlines()
+        self.train_data=[line.strip() for line in lines if line.strip()!='']
+        lines=[]
+        for path in _test_paths:
+            with open(path, 'r', encoding='utf-8') as f:
+                lines+=f.readlines()
+        self.test_data=[line.strip() for line in lines if line.strip()!='']
 
-        datas=[line.strip() for line in lines if line.strip()!='']
-        test_size=min(test_size,int(0.1*len(datas)))
-        self.save_hyperparameters()
-        self.train_data, self.test_data=datas[test_size:], datas[:test_size]
         self.train_size=len(self.train_data)
+        self.test_size=len(self.test_data)
         self.maxlen=max([len(detag(x)) for x in self.train_data+self.test_data])
 
-        if self.not_divided:
-            self.train_data=[detag(sentence, sep=('' if self.not_divided else ' ')) for sentence in self.train_data]
-        self.test_data=[(sentence, detag(sentence, sep=('' if self.not_divided else ' '))) for sentence in self.test_data]
+        if not _supervised:
+            self.train_data=[detag(sentence, sep=('' if _atom=='letter' else ' ')) for sentence in self.train_data]
+        self.test_data=[(sentence, detag(sentence)) for sentence in self.test_data]
 
         print('training lines of data: ', self.train_size)
         print('test lines of data: ', self.test_size)

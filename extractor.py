@@ -17,13 +17,14 @@ class TextRank(Base):
         for i in range(self.loop_lim):
             self.p=self.p@self.M
         
-        self.ranked=sorted([(p,word['word']) for p,word in zip(self.p, words)], reverse=True)
+        self.ranked=sorted([(p,word['word']) for p,word in zip(self.p, words) if categorize(word['tag'])!='nx'], reverse=True)
         
     def get_rank(self, num=10):
         return self.ranked[:num]
     
     def r(self, word):
-        return 0.9 if word['prop']=='undefined' else 0.5
+        tag=categorize(word['tag'])
+        return 1 if tag=='nx' else (0.7 if word['prop']=='undefined' else 0.3)
     
     def w(self, word1, word2):
         return important_pairs.get(categorize(word1['tag'])+'->'+categorize(word2['tag']), 1) if word1['tag'] and word2['tag'] else 1

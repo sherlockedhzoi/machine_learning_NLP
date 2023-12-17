@@ -15,7 +15,7 @@ class Base:
 
 err=1e-2
 def detag(sentence, sep=''):
-    return ''.join([word.split('[')[-1].split(']')[0].split('/')[0] for word in sentence.split()])
+    return sep.join([word.split('[')[-1].split(']')[0].split('/')[0] for word in sentence.split()])
 
 important_pairs={
     'v->n': 2, 'n->v': 2,
@@ -47,7 +47,7 @@ def evaluate(seg, ds, code):
     test_datas=ds.get_test_batch(batch_size=50)
     sentence_acc, pos_acc, tag_acc=0, 0, 0
     for right_sentence, detagged in test_datas:
-        # print(detagged)
+        print(right_sentence, detagged)
         words=seg.predict(detagged)
         sentence=code.words2sentence(words)
         letters=list(code.words2letters(words))

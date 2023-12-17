@@ -23,7 +23,7 @@ class HMMPredictor(Base):
                 self.pi=self.pi/sum(self.pi)
         else:
             try:
-                if supervised:
+                if self.supervised:
                     with open(f'data/{atom}_cnt_dict.json','r') as f:
                         params=json.load(f)
                     self.cntA=np.array(params['cntA'])
@@ -134,6 +134,7 @@ class HMMPredictor(Base):
     def predict(self, line):
         assert self.A is not None and self.B is not None and self.pi is not None, 'model need to be trained'
         O=self.code.encode_sentence(line, train=False, atom=self.atom)
+        # print(self.A.shape, self.B.shape, self.pi.shape, O, list(line))
         logp=[np.array([-np.log(self.pi[i])-np.log(self.B[i][O[0]]) for i in range(self.N)])]
         frm=[np.array([])]
         for t in range(1, len(O)):

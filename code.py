@@ -92,18 +92,18 @@ class Coder(Sentence22Words, Words22Letters, Sentence22Letters, Base):
     def encode_sentence(self, sentence, train=True, atom='letter'):
         assert atom in ['letter','word'], f'Don\'t accept atoms other than word/letter, but received {atom}'
         if train:
-            words=self.sentence2words(sentence)
-            letters=self.words2letters(words)
+            words=list(self.sentence2words(sentence))
+            letters=list(self.words2letters(words))
             if atom=='word':
                 return list(map(self.encode_words, words))
             else:
                 return list(map(self.encode_letter, letters))
         else:
             if atom=='word':
-                words=self.sentence2words(sentence)
+                words=list(self.sentence2words(sentence))
                 return [self.word_dict.get_id(word['word']) for word in words]
             else:
-                letters=self.sentence2letters(sentence)
+                letters=list(self.sentence2letters(sentence))
                 return [self.letter_dict.get_id(letter['letter']) for letter in letters]
 
     def decode_pos(self, state) -> str:
