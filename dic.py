@@ -74,13 +74,10 @@ class WordDict(Trie):
         self.words=['<unk>']
         datas=pd.read_csv(path, header=None, encoding='utf-8', dtype=str).drop_duplicates([0]).fillna('<unk>').to_numpy()
         self.total_freq=sum(map(int,datas[:,1]))
-        # print(datas)
         for i, data in enumerate(datas):
-            # data=data[0:]
             while data[-1]=='<unk>':
                 data=data[:-1]
             word, freq, tag, prop=data[0], int(data[1]), data[2], (data[3:].tolist() if len(data)>3 else '<unk>')
-            # print(data, word, freq, tag, prop)
             self.words.append(word)
             self.insert(word, freq, tag, prop)
         print('total words:', self.length)
@@ -100,7 +97,6 @@ class LetterDict:
                     idx, letter=line.strip('\n').split('\t')
                     self.letter2id[letter]=int(idx)
                     self.id2letter[int(idx)]=letter
-        # print(self.letter2id)
         self.length=len(self.letter2id)
         print('total_letter:', self.length)
     

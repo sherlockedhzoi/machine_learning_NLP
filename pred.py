@@ -81,7 +81,7 @@ class HMMPredictor(Base):
             beta=self.get_beta(sentence)
             gamma.append(self.get_gamma(alpha, beta, sentence))
             xi.append(self.get_xi(alpha, beta, sentence))
-        print('Pre-calculation complete.')
+        # print('Pre-calculation complete.')
         A, B=[], []
         for i in range(self.N):
             nowA=[]
@@ -90,7 +90,7 @@ class HMMPredictor(Base):
                 s2=sum([xi[epoch][t][i][j] for epoch in range(len(datas)) for t in range(len(datas[epoch])-1)])
                 nowA.append(s2/s1 if s1 else 0)
             A.append(np.array(nowA))
-        print('A calculation done.')
+        # print('A calculation done.')
         for j in range(self.N):
             nowB=[]
             s1=sum([gamma[epoch][t][j] for epoch in range(len(datas)) for t in range(len(datas[epoch]))])
@@ -98,9 +98,9 @@ class HMMPredictor(Base):
                 s2=sum([gamma[epoch][t][j]*(datas[epoch][t]==k) for epoch in range(len(datas)) for t in range(len(datas[epoch]))])
                 nowB.append(s2/s1 if s1 else 0)
             B.append(np.array(nowB))
-        print('B calculation done.')
+        # print('B calculation done.')
         pi=[sum([gamma[epoch][t][i] for epoch in range(len(datas)) for t in range(len(datas[epoch])) if self.code.is_begin(datas[epoch][t])]) for i in range(self.N)]
-        print('pi calculation done.')
+        # print('pi calculation done.')
 
         A, B, pi=np.array(A), np.array(B), np.array(pi)
         loss=abs(self.A-A).sum()+abs(self.B-B).sum()+abs(self.pi-pi).sum()
@@ -134,7 +134,6 @@ class HMMPredictor(Base):
     def predict(self, line):
         assert self.A is not None and self.B is not None and self.pi is not None, 'model need to be trained'
         O=self.code.encode_sentence(line, train=False, atom=self.atom)
-        # print(self.A.shape, self.B.shape, self.pi.shape, O, list(line))
         logp=[np.array([-np.log(self.pi[i])-np.log(self.B[i][O[0]]) for i in range(self.N)])]
         frm=[np.array([])]
         for t in range(1, len(O)):
@@ -144,7 +143,6 @@ class HMMPredictor(Base):
             frm.append(nowlogp.argmin(axis=1))
         
         endstate=self.code.get_all_ends()[logp[-1][self.code.get_all_ends()].argmin()] if self.atom=='letter' else logp[-1].argmin()
-        # print(logp[-1], endstate)
         I=[endstate]
         for t in range(len(O)-1,0,-1):
             endstate=frm[t][endstate]

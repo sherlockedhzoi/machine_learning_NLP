@@ -14,7 +14,6 @@ class Segmentor(Base):
             to.append([])
             while now<len(sentence) and self.word_dict.step(sentence[now]):
                 if self.word_dict.reach_end:
-                    # print(sentence[i:now+1], self.word_dict.get_now_freq())
                     to[i].append((now, self.word_dict.get_now_freq()))
                 now+=1
         return to
@@ -23,7 +22,6 @@ class Segmentor(Base):
         log_total=log(self.word_dict.get_total_freq())
         max_to=[None]*len(to)
         for u in range(len(to)-1,-1,-1):
-            # print(to[u])
             max_to[u]=min((-log(freq)+log_total+(max_to[v+1][0] if v+1<len(to) else 0),v) for v,freq in to[u]) if len(to[u]) else (0,u)
         return max_to
 
@@ -41,7 +39,6 @@ class Segmentor(Base):
             if self.word_dict.get_id(now_word)!=self.word_dict.unk:
                 if buf:
                     pred_words=self.predictor.predict(buf)
-                    # print(buf, pred_words)
                     words+=pred_words
                     buf=''
                 words.append({
@@ -54,7 +51,6 @@ class Segmentor(Base):
             l=r
         if buf:
             pred_words=self.predictor.predict(buf)
-            # print(buf, pred_words)
             words+=pred_words
             buf=''
         return words

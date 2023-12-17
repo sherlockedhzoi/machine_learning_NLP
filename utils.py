@@ -47,7 +47,6 @@ def evaluate(seg, ds, code):
     test_datas=ds.get_test_batch(batch_size=50)
     sentence_acc, pos_acc, tag_acc=0, 0, 0
     for right_sentence, detagged in test_datas:
-        print(right_sentence, detagged)
         words=seg.predict(detagged)
         sentence=code.words2sentence(words)
         letters=list(code.words2letters(words))
@@ -58,12 +57,6 @@ def evaluate(seg, ds, code):
         right_letters=list(code.words2letters(right_words))
         right_tags=[word['tag'] for word in right_words]
         right_pos=[letter['pos'] for letter in right_letters]
-
-        # print('sentence:', sentence, 'right:', right_sentence)
-        # print('words:', words, 'right_words:', right_words)
-        # print('letters:', letters, 'right_letters:', right_letters)
-        # print('pos:', pos, 'right_pos:', right_pos)
-        # print('tags:', tags, 'right_tags:', right_tags)
 
         pos_acc+=evaluate_sentence(pos, right_pos)
         tag_acc+=evaluate_sentence(tags, right_tags)

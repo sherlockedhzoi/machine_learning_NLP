@@ -135,7 +135,6 @@ class Coder(Sentence22Words, Words22Letters, Sentence22Letters, Base):
             words=list(self.letters2words(letters))
         else:
             words=list(map(self.decode_word,sentence))
-        # print(letters, words)
         return words
 
     def is_begin(self, tag):

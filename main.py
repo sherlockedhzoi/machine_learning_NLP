@@ -41,7 +41,7 @@ else:
     hyper_param=HyperParam(T=ds.get_maxlen(), N=len(tag_dict), M=len(word_dict))
 if arg.retrain:
     pred=HMMPredictor(hyper_param.N, hyper_param.M, hyper_param.T, encoder_decoder, ds=ds, atom=arg.atom, supervised=arg.supervised)
-    pred.train(1)
+    pred.train(50)
     print('Predictor training complete.')
     pred.save()
 else:
@@ -61,7 +61,6 @@ if arg.eval:
 
 test_datas=ds.get_test_data()
 for sentence, detagged in test_datas:
-    # print(sentence, detagged)
     words=seg.predict(detagged)
     print(encoder_decoder.words2sentence(words))
     extr.load(words)
